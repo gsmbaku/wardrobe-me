@@ -13,6 +13,7 @@ export interface WardrobeItem {
   purchaseDate?: string;
   price?: number;
   notes?: string;
+  storageSpaceId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,10 +61,22 @@ export interface Note {
   updatedAt: string;
 }
 
+export type StorageSpaceType = 'hanging' | 'shelf' | 'drawer' | 'bin' | 'rack' | 'other';
+
+export interface StorageSpace {
+  id: string;
+  name: string;
+  type: StorageSpaceType;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StorageData {
   version: number;
   items: WardrobeItem[];
   outfits: Outfit[];
   wearLogs: WearLogEntry[];
   notes: Note[];
+  storageSpaces: StorageSpace[];
 }

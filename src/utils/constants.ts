@@ -41,8 +41,18 @@ export const STORAGE_KEYS = {
   OUTFITS: 'wardrobe_outfits',
   WEAR_LOGS: 'wardrobe_wear_logs',
   NOTES: 'wardrobe_notes',
+  STORAGE_SPACES: 'wardrobe_storage_spaces',
   VERSION: 'wardrobe_version',
 } as const;
+
+export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; label: string; icon: string }[] = [
+  { value: 'hanging', label: 'Hanging Rod', icon: '🪝' },
+  { value: 'shelf', label: 'Shelf', icon: '📚' },
+  { value: 'drawer', label: 'Drawer', icon: '🗄️' },
+  { value: 'bin', label: 'Storage Bin', icon: '📦' },
+  { value: 'rack', label: 'Rack', icon: '🧺' },
+  { value: 'other', label: 'Other', icon: '📍' },
+];
 
 export const CURRENT_VERSION = 1;
 

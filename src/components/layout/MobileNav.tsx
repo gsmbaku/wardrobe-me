@@ -69,14 +69,14 @@ const navItems = [
 
 export default function MobileNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-      <div className="flex justify-around">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 safe-area-bottom">
+      <div className="flex overflow-x-auto scrollbar-hide px-2 gap-1">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-2 py-3 text-xs font-medium transition-colors ${
+              `flex flex-col items-center gap-1 px-4 py-3 text-xs font-medium transition-colors flex-shrink-0 min-w-[4.5rem] ${
                 isActive ? 'text-indigo-600' : 'text-gray-500'
               }`
             }

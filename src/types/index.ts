@@ -52,9 +52,18 @@ export interface ImageRecord {
   createdAt: string;
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StorageData {
   version: number;
   items: WardrobeItem[];
   outfits: Outfit[];
   wearLogs: WearLogEntry[];
+  notes: Note[];
 }

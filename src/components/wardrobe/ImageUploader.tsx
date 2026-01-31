@@ -91,21 +91,23 @@ export default function ImageUploader({ onImageSelect, previewUrl }: ImageUpload
               alt="Preview"
               className="w-full h-full object-cover rounded-lg"
             />
+            {/* Hover overlay for desktop */}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
               <span className="text-white text-sm font-medium">Click to change</span>
-              {originalImageUrl && (
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10zm10 0a1 1 0 011-1h6a1 1 0 011 1v10a1 1 0 01-1 1h-6a1 1 0 01-1-1V10z" />
-                  </svg>
-                  Crop
-                </button>
-              )}
             </div>
+            {/* Crop button - always visible on mobile, hover on desktop */}
+            {originalImageUrl && (
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-800 text-sm font-medium rounded-lg shadow-md hover:bg-gray-100 transition-colors md:opacity-0 md:group-hover:opacity-100"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10zm10 0a1 1 0 011-1h6a1 1 0 011 1v10a1 1 0 01-1 1h-6a1 1 0 01-1-1V10z" />
+                </svg>
+                Crop
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 px-4">

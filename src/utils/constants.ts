@@ -39,6 +39,7 @@ export const STORAGE_KEYS = {
   ITEMS: 'wardrobe_items',
   OUTFITS: 'wardrobe_outfits',
   WEAR_LOGS: 'wardrobe_wear_logs',
+  NOTES: 'wardrobe_notes',
   VERSION: 'wardrobe_version',
 } as const;
 

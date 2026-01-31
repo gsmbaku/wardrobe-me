@@ -1,4 +1,4 @@
-import type { WardrobeItem, Outfit, WearLogEntry } from '../../types';
+import type { WardrobeItem, Outfit, WearLogEntry, Note } from '../../types';
 import { STORAGE_KEYS, CURRENT_VERSION } from '../../utils/constants';
 
 function getItem<T>(key: string, defaultValue: T): T {
@@ -101,6 +101,35 @@ export function deleteWearLog(id: string): void {
   setWearLogs(logs);
 }
 
+// Notes
+export function getNotes(): Note[] {
+  return getItem<Note[]>(STORAGE_KEYS.NOTES, []);
+}
+
+export function setNotes(notes: Note[]): void {
+  setItem(STORAGE_KEYS.NOTES, notes);
+}
+
+export function addNote(note: Note): void {
+  const notes = getNotes();
+  notes.push(note);
+  setNotes(notes);
+}
+
+export function updateNote(id: string, updates: Partial<Note>): void {
+  const notes = getNotes();
+  const index = notes.findIndex(note => note.id === id);
+  if (index !== -1) {
+    notes[index] = { ...notes[index], ...updates, updatedAt: new Date().toISOString() };
+    setNotes(notes);
+  }
+}
+
+export function deleteNote(id: string): void {
+  const notes = getNotes().filter(note => note.id !== id);
+  setNotes(notes);
+}
+
 // Version and migration
 export function getVersion(): number {
   return getItem<number>(STORAGE_KEYS.VERSION, 0);
@@ -125,15 +154,17 @@ export function exportAllData() {
     items: getItems(),
     outfits: getOutfits(),
     wearLogs: getWearLogs(),
+    notes: getNotes(),
     exportedAt: new Date().toISOString(),
   };
 }
 
 // Import data
-export function importData(data: { items?: WardrobeItem[]; outfits?: Outfit[]; wearLogs?: WearLogEntry[] }): void {
+export function importData(data: { items?: WardrobeItem[]; outfits?: Outfit[]; wearLogs?: WearLogEntry[]; notes?: Note[] }): void {
   if (data.items) setItems(data.items);
   if (data.outfits) setOutfits(data.outfits);
   if (data.wearLogs) setWearLogs(data.wearLogs);
+  if (data.notes) setNotes(data.notes);
 }
 
 // Clear all data
@@ -141,4 +172,5 @@ export function clearAllData(): void {
   localStorage.removeItem(STORAGE_KEYS.ITEMS);
   localStorage.removeItem(STORAGE_KEYS.OUTFITS);
   localStorage.removeItem(STORAGE_KEYS.WEAR_LOGS);
+  localStorage.removeItem(STORAGE_KEYS.NOTES);
 }

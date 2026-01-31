@@ -4,6 +4,7 @@ import { useWardrobe } from '../../hooks/useWardrobe';
 import { useOutfits } from '../../hooks/useOutfits';
 import { useToast } from '../common/Toast';
 import { Card, Button, Modal } from '../common';
+import OutfitViewModal from './OutfitViewModal';
 import type { Outfit } from '../../types';
 
 interface OutfitCardProps {
@@ -26,6 +27,7 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
   const { deleteOutfit } = useOutfits();
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const previewItems = outfit.items.slice(0, 4);
   const remainingCount = outfit.items.length - 4;
@@ -39,7 +41,10 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
   return (
     <>
       <Card padding="none" className="overflow-hidden group">
-        <div className="aspect-square bg-gray-100 relative">
+        <div
+          className="aspect-square bg-gray-100 relative cursor-pointer"
+          onClick={() => setShowViewModal(true)}
+        >
           <div className="grid grid-cols-2 gap-0.5 p-0.5 h-full">
             {previewItems.map((itemPos) => {
               const item = getItem(itemPos.itemId);
@@ -63,7 +68,10 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
 
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
             <button
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
             >
               <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,7 +79,10 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
               </svg>
             </button>
             <button
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+              }}
               className="p-1.5 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
             >
               <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,6 +113,12 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
           </div>
         </div>
       </Modal>
+
+      <OutfitViewModal
+        outfit={outfit}
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+      />
     </>
   );
 }

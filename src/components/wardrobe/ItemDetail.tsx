@@ -100,6 +100,13 @@ export default function ItemDetail({ item, onDelete }: ItemDetailProps) {
         </div>
       </div>
 
+      {item.notes && (
+        <div>
+          <label className="text-sm text-gray-500">Notes</label>
+          <p className="font-medium text-gray-900 whitespace-pre-wrap">{item.notes}</p>
+        </div>
+      )}
+
       <div className="flex justify-end pt-4 border-t border-gray-200">
         <Button variant="danger" onClick={onDelete}>
           Delete Item

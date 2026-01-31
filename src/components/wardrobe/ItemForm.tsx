@@ -21,6 +21,7 @@ export default function ItemForm({ onClose }: ItemFormProps) {
   const [brand, setBrand] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
   const [price, setPrice] = useState('');
+  const [notes, setNotes] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,6 +63,7 @@ export default function ItemForm({ onClose }: ItemFormProps) {
         brand: brand.trim() || undefined,
         purchaseDate: purchaseDate || undefined,
         price: price ? parseFloat(price) : undefined,
+        notes: notes.trim() || undefined,
       });
 
       showToast('Item added successfully', 'success');
@@ -182,6 +184,17 @@ export default function ItemForm({ onClose }: ItemFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Care instructions, outfit ideas, or any other notes..."
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">

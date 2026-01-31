@@ -12,6 +12,7 @@ export interface WardrobeItem {
   brand?: string;
   purchaseDate?: string;
   price?: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

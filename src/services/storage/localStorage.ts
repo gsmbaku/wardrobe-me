@@ -1,4 +1,4 @@
-import type { WardrobeItem, Outfit, WearLogEntry, Note } from '../../types';
+import type { WardrobeItem, Outfit, WearLogEntry, Note, StorageSpace } from '../../types';
 import { STORAGE_KEYS, CURRENT_VERSION } from '../../utils/constants';
 
 function getItem<T>(key: string, defaultValue: T): T {
@@ -130,6 +130,35 @@ export function deleteNote(id: string): void {
   setNotes(notes);
 }
 
+// Storage Spaces
+export function getStorageSpaces(): StorageSpace[] {
+  return getItem<StorageSpace[]>(STORAGE_KEYS.STORAGE_SPACES, []);
+}
+
+export function setStorageSpaces(spaces: StorageSpace[]): void {
+  setItem(STORAGE_KEYS.STORAGE_SPACES, spaces);
+}
+
+export function addStorageSpace(space: StorageSpace): void {
+  const spaces = getStorageSpaces();
+  spaces.push(space);
+  setStorageSpaces(spaces);
+}
+
+export function updateStorageSpace(id: string, updates: Partial<StorageSpace>): void {
+  const spaces = getStorageSpaces();
+  const index = spaces.findIndex(space => space.id === id);
+  if (index !== -1) {
+    spaces[index] = { ...spaces[index], ...updates, updatedAt: new Date().toISOString() };
+    setStorageSpaces(spaces);
+  }
+}
+
+export function deleteStorageSpace(id: string): void {
+  const spaces = getStorageSpaces().filter(space => space.id !== id);
+  setStorageSpaces(spaces);
+}
+
 // Version and migration
 export function getVersion(): number {
   return getItem<number>(STORAGE_KEYS.VERSION, 0);
@@ -155,16 +184,18 @@ export function exportAllData() {
     outfits: getOutfits(),
     wearLogs: getWearLogs(),
     notes: getNotes(),
+    storageSpaces: getStorageSpaces(),
     exportedAt: new Date().toISOString(),
   };
 }
 
 // Import data
-export function importData(data: { items?: WardrobeItem[]; outfits?: Outfit[]; wearLogs?: WearLogEntry[]; notes?: Note[] }): void {
+export function importData(data: { items?: WardrobeItem[]; outfits?: Outfit[]; wearLogs?: WearLogEntry[]; notes?: Note[]; storageSpaces?: StorageSpace[] }): void {
   if (data.items) setItems(data.items);
   if (data.outfits) setOutfits(data.outfits);
   if (data.wearLogs) setWearLogs(data.wearLogs);
   if (data.notes) setNotes(data.notes);
+  if (data.storageSpaces) setStorageSpaces(data.storageSpaces);
 }
 
 // Clear all data
@@ -173,4 +204,5 @@ export function clearAllData(): void {
   localStorage.removeItem(STORAGE_KEYS.OUTFITS);
   localStorage.removeItem(STORAGE_KEYS.WEAR_LOGS);
   localStorage.removeItem(STORAGE_KEYS.NOTES);
+  localStorage.removeItem(STORAGE_KEYS.STORAGE_SPACES);
 }

@@ -32,6 +32,7 @@ export const COLORS = [
   { value: 'brown', label: 'Brown', hex: '#92400E' },
   { value: 'beige', label: 'Beige', hex: '#D4B896' },
   { value: 'navy', label: 'Navy', hex: '#1E3A5F' },
+  { value: 'camo', label: 'Camo', hex: 'linear-gradient(45deg, #556B2F, #8B7355, #3D4F2F, #6B5B3F)' },
   { value: 'multi', label: 'Multi', hex: 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)' },
 ];
 

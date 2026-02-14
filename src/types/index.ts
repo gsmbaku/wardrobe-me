@@ -80,3 +80,55 @@ export interface StorageData {
   notes: Note[];
   storageSpaces: StorageSpace[];
 }
+
+// Chat types
+export type ChatRole = 'user' | 'assistant' | 'system';
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  timestamp: string;
+  referencedItemIds?: string[];
+}
+
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpenAIMessageContent {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: { url: string };
+}
+
+export interface OpenAIMessage {
+  role: ChatRole;
+  content: string | OpenAIMessageContent[];
+}
+
+export interface OpenAIChatRequest {
+  model: string;
+  messages: OpenAIMessage[];
+  temperature?: number;
+  max_tokens?: number;
+}
+
+export interface OpenAIChatResponse {
+  choices: {
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}

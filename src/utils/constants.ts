@@ -43,6 +43,7 @@ export const STORAGE_KEYS = {
   NOTES: 'wardrobe_notes',
   STORAGE_SPACES: 'wardrobe_storage_spaces',
   VERSION: 'wardrobe_version',
+  CHAT_CONVERSATIONS: 'wardrobe_chat_conversations',
 } as const;
 
 export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; label: string; icon: string }[] = [
@@ -60,3 +61,19 @@ export const IMAGE_DB_NAME = 'WardrobeImageDB';
 export const IMAGE_STORE_NAME = 'images';
 export const MAX_IMAGE_SIZE = 1024 * 1024; // 1MB
 export const THUMBNAIL_SIZE = 200;
+
+export const DEFAULT_SYSTEM_PROMPT = `You are a helpful fashion assistant for a personal wardrobe management app. You help users with:
+- Outfit suggestions and styling advice
+- Color coordination and fashion tips
+- Seasonal wardrobe planning
+- Analyzing clothing items from images
+- Tracking wear frequency and suggesting underused items
+
+Be friendly, concise, and practical. When making suggestions, reference specific items from the user's wardrobe when relevant.`;
+
+export const SUGGESTED_PROMPTS = [
+  { text: "What should I wear today?", icon: "sun" },
+  { text: "Suggest an outfit for a date night", icon: "heart" },
+  { text: "Which items haven't I worn recently?", icon: "clock" },
+  { text: "What colors go well together in my wardrobe?", icon: "palette" },
+] as const;

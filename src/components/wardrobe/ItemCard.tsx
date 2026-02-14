@@ -10,9 +10,10 @@ import { CATEGORIES, COLORS } from '../../utils/constants';
 
 interface ItemCardProps {
   item: WardrobeItem;
+  onEdit?: (item: WardrobeItem) => void;
 }
 
-export default function ItemCard({ item }: ItemCardProps) {
+export default function ItemCard({ item, onEdit }: ItemCardProps) {
   const thumbnailUrl = useThumbnailURL(item.imageId);
   const { deleteItem } = useWardrobe();
   const { getWearCountForItem } = useWearLog();
@@ -34,6 +35,11 @@ export default function ItemCard({ item }: ItemCardProps) {
     setShowDeleteConfirm(false);
   };
 
+  const handleEdit = () => {
+    setShowDetail(false);
+    onEdit?.(item);
+  };
+
   return (
     <>
       <Card padding="none" className="overflow-hidden group">
@@ -52,6 +58,13 @@ export default function ItemCard({ item }: ItemCardProps) {
               <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
+            </div>
+          )}
+
+          {/* For Sale Badge */}
+          {item.forSale && (
+            <div className="absolute top-2 left-2 px-2 py-0.5 bg-green-500 text-white text-xs font-medium rounded-full shadow-sm">
+              For Sale
             </div>
           )}
 
@@ -92,7 +105,7 @@ export default function ItemCard({ item }: ItemCardProps) {
       </Card>
 
       <Modal isOpen={showDetail} onClose={() => setShowDetail(false)} title={item.name} size="lg">
-        <ItemDetail item={item} onDelete={() => setShowDeleteConfirm(true)} />
+        <ItemDetail item={item} onDelete={() => setShowDeleteConfirm(true)} onEdit={handleEdit} />
       </Modal>
 
       <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Item">

@@ -6,3 +6,4 @@ export { default as SettingsPage } from './SettingsPage';
 export { default as NotesPage } from './NotesPage';
 export { default as OrganizePage } from './OrganizePage';
 export { default as AssistantPage } from './AssistantPage';
+export { default as EventsPage } from './EventsPage';

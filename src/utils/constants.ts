@@ -1,13 +1,48 @@
-import type { Category, Season } from '../types';
+import type { Category, Season, Fit, Occasion } from '../types';
 
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'tops', label: 'Tops' },
   { value: 'bottoms', label: 'Bottoms' },
+  { value: 'shorts', label: 'Shorts' },
   { value: 'dresses', label: 'Dresses' },
   { value: 'outerwear', label: 'Outerwear' },
   { value: 'shoes', label: 'Shoes' },
   { value: 'accessories', label: 'Accessories' },
   { value: 'bags', label: 'Bags' },
+];
+
+export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'] as const;
+
+export const ITEM_TAGS = [
+  { value: 'athletic', label: 'Athletic' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'lounge', label: 'Lounge' },
+  { value: 'formal', label: 'Formal' },
+  { value: 'work', label: 'Work' },
+  { value: 'date-night', label: 'Date Night' },
+  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'streetwear', label: 'Streetwear' },
+] as const;
+
+export const FITS: { value: Fit; label: string }[] = [
+  { value: 'oversized', label: 'Oversized' },
+  { value: 'baggy', label: 'Baggy' },
+  { value: 'relaxed', label: 'Relaxed' },
+  { value: 'regular', label: 'Regular' },
+  { value: 'slim', label: 'Slim' },
+  { value: 'fitted', label: 'Fitted' },
+  { value: 'tight', label: 'Tight' },
+];
+
+export const OCCASIONS: { value: Occasion; label: string }[] = [
+  { value: 'casual', label: 'Casual' },
+  { value: 'work', label: 'Work' },
+  { value: 'formal', label: 'Formal' },
+  { value: 'date', label: 'Date' },
+  { value: 'party', label: 'Party' },
+  { value: 'travel', label: 'Travel' },
+  { value: 'workout', label: 'Workout' },
+  { value: 'other', label: 'Other' },
 ];
 
 export const SEASONS: { value: Season; label: string }[] = [
@@ -44,6 +79,7 @@ export const STORAGE_KEYS = {
   STORAGE_SPACES: 'wardrobe_storage_spaces',
   VERSION: 'wardrobe_version',
   CHAT_CONVERSATIONS: 'wardrobe_chat_conversations',
+  EVENTS: 'wardrobe_events',
 } as const;
 
 export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; label: string; icon: string }[] = [

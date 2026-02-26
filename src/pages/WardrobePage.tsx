@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useWardrobe } from '../hooks/useWardrobe';
-import type { Category, Season, WardrobeItem } from '../types';
+import type { Category, Season } from '../types';
 import { Button, FilterBar, EmptyState, Modal } from '../components/common';
 import ItemGrid from '../components/wardrobe/ItemGrid';
 import ItemForm from '../components/wardrobe/ItemForm';
@@ -10,16 +10,25 @@ export default function WardrobePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { items } = useWardrobe();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
 
   const category = (searchParams.get('category') || 'all') as Category | 'all';
   const color = searchParams.get('color') || 'all';
   const season = (searchParams.get('season') || 'all') as Season | 'all';
+  const q = searchParams.get('q') || '';
 
   const filteredItems = items.filter((item) => {
     if (category !== 'all' && item.category !== category) return false;
     if (color !== 'all' && item.color !== color) return false;
     if (season !== 'all' && !item.seasons.includes(season)) return false;
+    if (q) {
+      const query = q.toLowerCase();
+      const match =
+        item.name.toLowerCase().includes(query) ||
+        (item.brand?.toLowerCase().includes(query) ?? false) ||
+        (item.tags?.some((t) => t.toLowerCase().includes(query)) ?? false) ||
+        (item.notes?.toLowerCase().includes(query) ?? false);
+      if (!match) return false;
+    }
     return true;
   });
 
@@ -33,12 +42,14 @@ export default function WardrobePage() {
     setSearchParams(params);
   };
 
-  const handleEditItem = (item: WardrobeItem) => {
-    setEditingItem(item);
-  };
-
-  const handleCloseEdit = () => {
-    setEditingItem(null);
+  const updateSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (!value) {
+      params.delete('q');
+    } else {
+      params.set('q', value);
+    }
+    setSearchParams(params);
   };
 
   return (
@@ -51,6 +62,24 @@ export default function WardrobePage() {
           </svg>
           Add Item
         </Button>
+      </div>
+
+      <div className="relative">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Search by name, brand, tags, notes..."
+          value={q}
+          onChange={(e) => updateSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
       </div>
 
       <FilterBar
@@ -75,19 +104,15 @@ export default function WardrobePage() {
         />
       ) : filteredItems.length === 0 ? (
         <EmptyState
-          title="No items match your filters"
-          description="Try adjusting your filters to see more items."
+          title="No items match your search"
+          description="Try different keywords or adjust your filters."
         />
       ) : (
-        <ItemGrid items={filteredItems} onEditItem={handleEditItem} />
+        <ItemGrid items={filteredItems} />
       )}
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Item" size="lg">
         <ItemForm onClose={() => setIsAddModalOpen(false)} />
-      </Modal>
-
-      <Modal isOpen={!!editingItem} onClose={handleCloseEdit} title={`Edit ${editingItem?.name || 'Item'}`} size="lg">
-        {editingItem && <ItemForm onClose={handleCloseEdit} editItem={editingItem} />}
       </Modal>
     </div>
   );

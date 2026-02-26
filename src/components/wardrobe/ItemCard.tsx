@@ -1,24 +1,23 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useThumbnailURL } from '../../hooks/useImageDB';
 import { useWardrobe } from '../../hooks/useWardrobe';
 import { useWearLog } from '../../hooks/useWearLog';
 import { useToast } from '../common/Toast';
 import { Card, Button, Modal } from '../common';
-import ItemDetail from './ItemDetail';
 import type { WardrobeItem } from '../../types';
 import { CATEGORIES, COLORS } from '../../utils/constants';
 
 interface ItemCardProps {
   item: WardrobeItem;
-  onEdit?: (item: WardrobeItem) => void;
 }
 
-export default function ItemCard({ item, onEdit }: ItemCardProps) {
+export default function ItemCard({ item }: ItemCardProps) {
   const thumbnailUrl = useThumbnailURL(item.imageId);
   const { deleteItem } = useWardrobe();
   const { getWearCountForItem } = useWearLog();
   const { showToast } = useToast();
-  const [showDetail, setShowDetail] = useState(false);
+  const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const wearCount = getWearCountForItem(item.id);
@@ -35,17 +34,12 @@ export default function ItemCard({ item, onEdit }: ItemCardProps) {
     setShowDeleteConfirm(false);
   };
 
-  const handleEdit = () => {
-    setShowDetail(false);
-    onEdit?.(item);
-  };
-
   return (
     <>
       <Card padding="none" className="overflow-hidden group">
         <div
           className="aspect-square bg-gray-100 cursor-pointer relative"
-          onClick={() => setShowDetail(true)}
+          onClick={() => navigate(`/items/${item.id}`)}
         >
           {thumbnailUrl ? (
             <img
@@ -103,10 +97,6 @@ export default function ItemCard({ item, onEdit }: ItemCardProps) {
           </div>
         </div>
       </Card>
-
-      <Modal isOpen={showDetail} onClose={() => setShowDetail(false)} title={item.name} size="lg">
-        <ItemDetail item={item} onDelete={() => setShowDeleteConfirm(true)} onEdit={handleEdit} />
-      </Modal>
 
       <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Item">
         <div className="space-y-4">

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuid } from 'uuid';
-import type { WardrobeItem, Category, Season } from '../types';
+import type { WardrobeItem, Category, Season, Fit } from '../types';
 import * as storage from '../services/storage/localStorage';
 import { saveImage, deleteImage } from '../services/storage/indexedDB';
 import { compressImage, generateThumbnail } from '../services/imageService';
@@ -17,6 +17,12 @@ interface WardrobeContextType {
     brand?: string;
     purchaseDate?: string;
     price?: number;
+    notes?: string;
+    size?: string;
+    tags?: string[];
+    fit?: Fit;
+    forSale?: boolean;
+    saleLink?: string;
   }) => Promise<void>;
   updateItem: (id: string, updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>) => void;
   deleteItem: (id: string) => Promise<void>;
@@ -44,6 +50,12 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     brand?: string;
     purchaseDate?: string;
     price?: number;
+    notes?: string;
+    size?: string;
+    tags?: string[];
+    fit?: Fit;
+    forSale?: boolean;
+    saleLink?: string;
   }) => {
     const imageId = uuid();
     const compressed = await compressImage(data.image);
@@ -61,6 +73,12 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
       brand: data.brand,
       purchaseDate: data.purchaseDate,
       price: data.price,
+      notes: data.notes,
+      size: data.size,
+      tags: data.tags,
+      fit: data.fit,
+      forSale: data.forSale,
+      saleLink: data.saleLink,
       createdAt: now,
       updatedAt: now,
     };

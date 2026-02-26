@@ -1,4 +1,8 @@
-export type Category = 'tops' | 'bottoms' | 'dresses' | 'outerwear' | 'shoes' | 'accessories' | 'bags';
+export type Category = 'tops' | 'bottoms' | 'shorts' | 'dresses' | 'outerwear' | 'shoes' | 'accessories' | 'bags';
+
+export type Fit = 'oversized' | 'baggy' | 'relaxed' | 'regular' | 'slim' | 'fitted' | 'tight';
+
+export type Occasion = 'casual' | 'work' | 'formal' | 'date' | 'party' | 'travel' | 'workout' | 'other';
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter' | 'all-season';
 
@@ -14,6 +18,11 @@ export interface WardrobeItem {
   price?: number;
   notes?: string;
   storageSpaceId?: string;
+  size?: string;
+  tags?: string[];
+  fit?: Fit;
+  forSale?: boolean;
+  saleLink?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +53,17 @@ export interface WearLogEntry {
   itemIds: string[];
   notes?: string;
   createdAt: string;
+}
+
+export interface PlannedEvent {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  occasion: Occasion;
+  outfitId?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ImageRecord {

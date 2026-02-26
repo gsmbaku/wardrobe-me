@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useWardrobe } from '../hooks/useWardrobe';
-import type { Category, Season } from '../types';
+import type { Category, Season, WardrobeItem } from '../types';
 import { Button, FilterBar, EmptyState, Modal } from '../components/common';
 import ItemGrid from '../components/wardrobe/ItemGrid';
 import ItemForm from '../components/wardrobe/ItemForm';
@@ -10,6 +10,7 @@ export default function WardrobePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { items } = useWardrobe();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
 
   const category = (searchParams.get('category') || 'all') as Category | 'all';
   const color = searchParams.get('color') || 'all';
@@ -30,6 +31,14 @@ export default function WardrobePage() {
       params.set(key, value);
     }
     setSearchParams(params);
+  };
+
+  const handleEditItem = (item: WardrobeItem) => {
+    setEditingItem(item);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingItem(null);
   };
 
   return (
@@ -70,11 +79,15 @@ export default function WardrobePage() {
           description="Try adjusting your filters to see more items."
         />
       ) : (
-        <ItemGrid items={filteredItems} />
+        <ItemGrid items={filteredItems} onEditItem={handleEditItem} />
       )}
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Item" size="lg">
         <ItemForm onClose={() => setIsAddModalOpen(false)} />
+      </Modal>
+
+      <Modal isOpen={!!editingItem} onClose={handleCloseEdit} title={`Edit ${editingItem?.name || 'Item'}`} size="lg">
+        {editingItem && <ItemForm onClose={handleCloseEdit} editItem={editingItem} />}
       </Modal>
     </div>
   );

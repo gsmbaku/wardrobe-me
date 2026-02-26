@@ -3,6 +3,7 @@ interface CalendarDayProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   wearCount: number;
+  eventCount?: number;
   onClick: () => void;
 }
 
@@ -11,6 +12,7 @@ export default function CalendarDay({
   isCurrentMonth,
   isToday,
   wearCount,
+  eventCount = 0,
   onClick,
 }: CalendarDayProps) {
   return (
@@ -32,19 +34,34 @@ export default function CalendarDay({
         {date.getDate()}
       </span>
 
-      {wearCount > 0 && (
-        <div className="absolute bottom-1 left-1 right-1 flex justify-center gap-0.5">
-          {Array.from({ length: Math.min(wearCount, 3) }).map((_, i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-green-500"
-            />
-          ))}
-          {wearCount > 3 && (
-            <span className="text-[10px] text-green-600 font-medium">+{wearCount - 3}</span>
-          )}
-        </div>
-      )}
+      <div className="absolute bottom-1 left-1 right-1 flex flex-col gap-0.5 items-center">
+        {eventCount > 0 && (
+          <div className="flex justify-center gap-0.5">
+            {Array.from({ length: Math.min(eventCount, 3) }).map((_, i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-purple-500"
+              />
+            ))}
+            {eventCount > 3 && (
+              <span className="text-[10px] text-purple-600 font-medium">+{eventCount - 3}</span>
+            )}
+          </div>
+        )}
+        {wearCount > 0 && (
+          <div className="flex justify-center gap-0.5">
+            {Array.from({ length: Math.min(wearCount, 3) }).map((_, i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-green-500"
+              />
+            ))}
+            {wearCount > 3 && (
+              <span className="text-[10px] text-green-600 font-medium">+{wearCount - 3}</span>
+            )}
+          </div>
+        )}
+      </div>
     </button>
   );
 }

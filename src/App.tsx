@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { WardrobeProvider, OutfitProvider, WearLogProvider, NotesProvider, StorageSpaceProvider, ChatProvider } from './contexts';
+import { WardrobeProvider, OutfitProvider, WearLogProvider, NotesProvider, StorageSpaceProvider, ChatProvider, EventProvider } from './contexts';
 import { ToastProvider } from './components/common';
 import { AppShell } from './components/layout';
-import { WardrobePage, OutfitsPage, CalendarPage, StatsPage, SettingsPage, NotesPage, OrganizePage, AssistantPage } from './pages';
+import { WardrobePage, OutfitsPage, CalendarPage, StatsPage, SettingsPage, NotesPage, OrganizePage, AssistantPage, EventsPage } from './pages';
 
 function App() {
   return (
@@ -14,18 +14,21 @@ function App() {
               <NotesProvider>
                 <StorageSpaceProvider>
                   <ChatProvider>
-                    <Routes>
-                      <Route element={<AppShell />}>
-                        <Route path="/" element={<WardrobePage />} />
-                        <Route path="/outfits" element={<OutfitsPage />} />
-                        <Route path="/calendar" element={<CalendarPage />} />
-                        <Route path="/stats" element={<StatsPage />} />
-                        <Route path="/notes" element={<NotesPage />} />
-                        <Route path="/organize" element={<OrganizePage />} />
-                        <Route path="/assistant" element={<AssistantPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                      </Route>
-                    </Routes>
+                    <EventProvider>
+                      <Routes>
+                        <Route element={<AppShell />}>
+                          <Route path="/" element={<WardrobePage />} />
+                          <Route path="/outfits" element={<OutfitsPage />} />
+                          <Route path="/calendar" element={<CalendarPage />} />
+                          <Route path="/stats" element={<StatsPage />} />
+                          <Route path="/notes" element={<NotesPage />} />
+                          <Route path="/organize" element={<OrganizePage />} />
+                          <Route path="/assistant" element={<AssistantPage />} />
+                          <Route path="/events" element={<EventsPage />} />
+                          <Route path="/settings" element={<SettingsPage />} />
+                        </Route>
+                      </Routes>
+                    </EventProvider>
                   </ChatProvider>
                 </StorageSpaceProvider>
               </NotesProvider>

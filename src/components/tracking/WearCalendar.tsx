@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useWearLog } from '../../hooks/useWearLog';
+import { useEvents } from '../../hooks/useEvents';
 import { Button } from '../common';
 import CalendarDay from './CalendarDay';
 
@@ -15,6 +16,7 @@ const MONTHS = [
 
 export default function WearCalendar({ onSelectDate }: WearCalendarProps) {
   const { wearLogs } = useWearLog();
+  const { events } = useEvents();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
@@ -28,6 +30,15 @@ export default function WearCalendar({ onSelectDate }: WearCalendarProps) {
     });
     return counts;
   }, [wearLogs]);
+
+  const eventCountByDate = useMemo(() => {
+    const counts = new Map<string, number>();
+    events.forEach((event) => {
+      const current = counts.get(event.date) || 0;
+      counts.set(event.date, current + 1);
+    });
+    return counts;
+  }, [events]);
 
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1);
@@ -107,6 +118,18 @@ export default function WearCalendar({ onSelectDate }: WearCalendarProps) {
         </Button>
       </div>
 
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-4 px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-600">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span>Worn</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-purple-500" />
+          <span>Event</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-7 border-b border-gray-200">
         {DAYS_OF_WEEK.map((day) => (
           <div key={day} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">
@@ -119,6 +142,7 @@ export default function WearCalendar({ onSelectDate }: WearCalendarProps) {
         {calendarDays.map(({ date, isCurrentMonth }, idx) => {
           const dateStr = formatDateString(date);
           const wearCount = wearCountByDate.get(dateStr) || 0;
+          const eventCount = eventCountByDate.get(dateStr) || 0;
           const isToday = dateStr === today;
 
           return (
@@ -128,6 +152,7 @@ export default function WearCalendar({ onSelectDate }: WearCalendarProps) {
               isCurrentMonth={isCurrentMonth}
               isToday={isToday}
               wearCount={wearCount}
+              eventCount={eventCount}
               onClick={() => onSelectDate(dateStr)}
             />
           );

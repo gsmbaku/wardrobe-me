@@ -19,7 +19,6 @@ export default function CalendarPage() {
       <Modal
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
-        title={selectedDate ? `Log Wear for ${new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}` : ''}
         size="lg"
       >
         {selectedDate && (
@@ -30,7 +29,6 @@ export default function CalendarPage() {
       <Modal
         isOpen={isQuickWearOpen}
         onClose={() => setIsQuickWearOpen(false)}
-        title="Quick Log Today's Wear"
         size="lg"
       >
         <WearLogForm

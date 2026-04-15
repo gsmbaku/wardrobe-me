@@ -7,7 +7,13 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(claude mcp list)",
+      "Bash(claude mcp add figma npx @figma/mcp-server)",
+      "mcp__figma-remote-mcp__get_design_context"
     ]
   }
 }

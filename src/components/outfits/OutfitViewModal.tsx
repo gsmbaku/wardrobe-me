@@ -1,6 +1,7 @@
 import { useThumbnailURL } from '../../hooks/useImageDB';
 import { useWardrobe } from '../../hooks/useWardrobe';
 import { Modal } from '../common';
+import { SEASONS, OCCASIONS } from '../../utils/constants';
 import type { Outfit, WardrobeItem, Category } from '../../types';
 
 interface OutfitViewModalProps {
@@ -94,6 +95,29 @@ export default function OutfitViewModal({ outfit, isOpen, onClose }: OutfitViewM
             </div>
           );
         })}
+
+        {((outfit.seasons && outfit.seasons.length > 0) || (outfit.occasions && outfit.occasions.length > 0)) && (
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex flex-wrap gap-1.5">
+              {outfit.seasons?.map((s) => {
+                const label = SEASONS.find((x) => x.value === s)?.label ?? s;
+                return (
+                  <span key={s} className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                    {label}
+                  </span>
+                );
+              })}
+              {outfit.occasions?.map((o) => {
+                const label = OCCASIONS.find((x) => x.value === o)?.label ?? o;
+                return (
+                  <span key={o} className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">
+                    {label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {outfit.description && (
           <div className="pt-4 border-t border-gray-200">

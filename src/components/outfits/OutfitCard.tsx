@@ -5,6 +5,7 @@ import { useOutfits } from '../../hooks/useOutfits';
 import { useToast } from '../common/Toast';
 import { Card, Button, Modal } from '../common';
 import OutfitViewModal from './OutfitViewModal';
+import { SEASONS, OCCASIONS } from '../../utils/constants';
 import type { Outfit } from '../../types';
 
 interface OutfitCardProps {
@@ -92,9 +93,29 @@ export default function OutfitCard({ outfit, onEdit }: OutfitCardProps) {
           </div>
         </div>
 
-        <div className="p-3">
+        <div className="p-3 space-y-1.5">
           <h3 className="font-medium text-gray-900 truncate">{outfit.name}</h3>
           <p className="text-sm text-gray-500">{outfit.items.length} items</p>
+          {((outfit.seasons && outfit.seasons.length > 0) || (outfit.occasions && outfit.occasions.length > 0)) && (
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {outfit.seasons?.map((s) => {
+                const label = SEASONS.find((x) => x.value === s)?.label ?? s;
+                return (
+                  <span key={s} className="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                    {label}
+                  </span>
+                );
+              })}
+              {outfit.occasions?.map((o) => {
+                const label = OCCASIONS.find((x) => x.value === o)?.label ?? o;
+                return (
+                  <span key={o} className="px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">
+                    {label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
       </Card>
 

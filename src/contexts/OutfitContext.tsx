@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuid } from 'uuid';
-import type { Outfit, OutfitItemPosition } from '../types';
+import type { Outfit, OutfitItemPosition, Season, Occasion } from '../types';
 import * as storage from '../services/storage/localStorage';
 
 interface OutfitContextType {
   outfits: Outfit[];
   loading: boolean;
-  addOutfit: (data: { name: string; description?: string; items: OutfitItemPosition[] }) => void;
+  addOutfit: (data: { name: string; description?: string; items: OutfitItemPosition[]; seasons?: Season[]; occasions?: Occasion[] }) => void;
   updateOutfit: (id: string, updates: Partial<Omit<Outfit, 'id' | 'createdAt'>>) => void;
   deleteOutfit: (id: string) => void;
   getOutfit: (id: string) => Outfit | undefined;
@@ -23,13 +23,15 @@ export function OutfitProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const addOutfit = useCallback((data: { name: string; description?: string; items: OutfitItemPosition[] }) => {
+  const addOutfit = useCallback((data: { name: string; description?: string; items: OutfitItemPosition[]; seasons?: Season[]; occasions?: Occasion[] }) => {
     const now = new Date().toISOString();
     const newOutfit: Outfit = {
       id: uuid(),
       name: data.name,
       description: data.description,
       items: data.items,
+      seasons: data.seasons,
+      occasions: data.occasions,
       createdAt: now,
       updatedAt: now,
     };

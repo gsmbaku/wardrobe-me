@@ -4,12 +4,16 @@ import { useWardrobe } from '../hooks/useWardrobe';
 import { Button, EmptyState, Modal } from '../components/common';
 import OutfitGrid from '../components/outfits/OutfitGrid';
 import OutfitBuilder from '../components/outfits/OutfitBuilder';
+import { SEASONS, OCCASIONS } from '../utils/constants';
+import type { Season, Occasion } from '../types';
 
 export default function OutfitsPage() {
   const { outfits } = useOutfits();
   const { items } = useWardrobe();
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [editingOutfitId, setEditingOutfitId] = useState<string | null>(null);
+  const [seasonFilter, setSeasonFilter] = useState<Season | ''>('');
+  const [occasionFilter, setOccasionFilter] = useState<Occasion | ''>('');
 
   const handleEdit = (outfitId: string) => {
     setEditingOutfitId(outfitId);
@@ -20,6 +24,14 @@ export default function OutfitsPage() {
     setIsBuilderOpen(false);
     setEditingOutfitId(null);
   };
+
+  const filteredOutfits = outfits.filter((outfit) => {
+    if (seasonFilter && (!outfit.seasons || !outfit.seasons.includes(seasonFilter))) return false;
+    if (occasionFilter && (!outfit.occasions || !outfit.occasions.includes(occasionFilter))) return false;
+    return true;
+  });
+
+  const hasActiveFilter = seasonFilter !== '' || occasionFilter !== '';
 
   return (
     <div className="space-y-6">
@@ -32,6 +44,47 @@ export default function OutfitsPage() {
           Create Outfit
         </Button>
       </div>
+
+      {items.length >= 2 && outfits.length > 0 && (
+        <div className="flex flex-wrap gap-3 items-center">
+          <select
+            value={seasonFilter}
+            onChange={(e) => setSeasonFilter(e.target.value as Season | '')}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          >
+            <option value="">All Seasons</option>
+            {SEASONS.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+
+          <select
+            value={occasionFilter}
+            onChange={(e) => setOccasionFilter(e.target.value as Occasion | '')}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          >
+            <option value="">All Occasions</option>
+            {OCCASIONS.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+
+          {hasActiveFilter && (
+            <button
+              onClick={() => { setSeasonFilter(''); setOccasionFilter(''); }}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Clear filters
+            </button>
+          )}
+
+          {hasActiveFilter && (
+            <span className="text-sm text-gray-500 ml-auto">
+              {filteredOutfits.length} of {outfits.length} outfits
+            </span>
+          )}
+        </div>
+      )}
 
       {items.length < 2 ? (
         <EmptyState
@@ -54,8 +107,19 @@ export default function OutfitsPage() {
           description="Create your first outfit by combining items from your wardrobe."
           action={{ label: 'Create Your First Outfit', onClick: () => setIsBuilderOpen(true) }}
         />
+      ) : filteredOutfits.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
+          }
+          title="No outfits match"
+          description="No outfits have those tags. Try a different filter or clear the current ones."
+          action={{ label: 'Clear Filters', onClick: () => { setSeasonFilter(''); setOccasionFilter(''); } }}
+        />
       ) : (
-        <OutfitGrid outfits={outfits} onEdit={handleEdit} />
+        <OutfitGrid outfits={filteredOutfits} onEdit={handleEdit} />
       )}
 
       <Modal isOpen={isBuilderOpen} onClose={handleClose} title={editingOutfitId ? 'Edit Outfit' : 'Create Outfit'} size="full">

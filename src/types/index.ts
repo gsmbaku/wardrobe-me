@@ -42,6 +42,8 @@ export interface Outfit {
   name: string;
   description?: string;
   items: OutfitItemPosition[];
+  seasons?: Season[];
+  occasions?: Occasion[];
   createdAt: string;
   updatedAt: string;
 }

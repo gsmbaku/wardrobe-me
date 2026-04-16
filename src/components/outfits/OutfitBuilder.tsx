@@ -4,7 +4,8 @@ import { useToast } from '../common/Toast';
 import { Button } from '../common';
 import OutfitItemPicker from './OutfitItemPicker';
 import OutfitCanvas from './OutfitCanvas';
-import type { OutfitItemPosition } from '../../types';
+import { SEASONS, OCCASIONS } from '../../utils/constants';
+import type { OutfitItemPosition, Season, Occasion } from '../../types';
 
 interface OutfitBuilderProps {
   outfitId?: string | null;
@@ -18,6 +19,8 @@ export default function OutfitBuilder({ outfitId, onClose }: OutfitBuilderProps)
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [items, setItems] = useState<OutfitItemPosition[]>([]);
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([]);
+  const [selectedOccasions, setSelectedOccasions] = useState<Occasion[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -27,9 +30,23 @@ export default function OutfitBuilder({ outfitId, onClose }: OutfitBuilderProps)
         setName(existing.name);
         setDescription(existing.description || '');
         setItems(existing.items);
+        setSelectedSeasons(existing.seasons || []);
+        setSelectedOccasions(existing.occasions || []);
       }
     }
   }, [outfitId, getOutfit]);
+
+  const toggleSeason = (season: Season) => {
+    setSelectedSeasons((prev) =>
+      prev.includes(season) ? prev.filter((s) => s !== season) : [...prev, season]
+    );
+  };
+
+  const toggleOccasion = (occasion: Occasion) => {
+    setSelectedOccasions((prev) =>
+      prev.includes(occasion) ? prev.filter((o) => o !== occasion) : [...prev, occasion]
+    );
+  };
 
   const handleItemSelect = (itemId: string) => {
     const exists = items.find((i) => i.itemId === itemId);
@@ -71,19 +88,19 @@ export default function OutfitBuilder({ outfitId, onClose }: OutfitBuilderProps)
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        items,
+        seasons: selectedSeasons.length > 0 ? selectedSeasons : undefined,
+        occasions: selectedOccasions.length > 0 ? selectedOccasions : undefined,
+      };
+
       if (outfitId) {
-        updateOutfit(outfitId, {
-          name: name.trim(),
-          description: description.trim() || undefined,
-          items,
-        });
+        updateOutfit(outfitId, payload);
         showToast('Outfit updated', 'success');
       } else {
-        addOutfit({
-          name: name.trim(),
-          description: description.trim() || undefined,
-          items,
-        });
+        addOutfit(payload);
         showToast('Outfit created', 'success');
       }
       onClose();
@@ -118,6 +135,46 @@ export default function OutfitBuilder({ outfitId, onClose }: OutfitBuilderProps)
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Seasons</label>
+            <div className="flex flex-wrap gap-2">
+              {SEASONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggleSeason(value)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                    selectedSeasons.includes(value)
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Occasions</label>
+            <div className="flex flex-wrap gap-2">
+              {OCCASIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggleOccasion(value)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                    selectedOccasions.includes(value)
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

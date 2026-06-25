@@ -14,10 +14,19 @@ export default function SettingsPage() {
     try {
       await downloadBackup();
       showToast('Backup downloaded successfully', 'success');
-    } catch (error) {
+    } catch {
       showToast('Failed to export backup', 'error');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    const confirmed = window.confirm(
+      'Importing a backup will replace all your local wardrobe data (items, outfits, wear logs, events, notes, storage spaces, AI conversations, and images). Continue?'
+    );
+    if (confirmed) {
+      fileInputRef.current?.click();
     }
   };
 
@@ -29,12 +38,11 @@ export default function SettingsPage() {
     try {
       const result = await importBackup(file);
       showToast(
-        `Imported ${result.itemCount} items, ${result.outfitCount} outfits, ${result.imageCount} images`,
+        `Imported ${result.itemCount} items, ${result.outfitCount} outfits, ${result.wearLogCount} wear logs, ${result.noteCount} notes, ${result.storageSpaceCount} storage spaces, ${result.eventCount} events, ${result.conversationCount} conversations, ${result.imageCount} images`,
         'success'
       );
-      // Reload the page to refresh all contexts
       window.location.reload();
-    } catch (error) {
+    } catch {
       showToast('Failed to import backup. Check the file format.', 'error');
     } finally {
       setIsImporting(false);
@@ -55,7 +63,8 @@ export default function SettingsPage() {
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">Export Data</h3>
             <p className="text-sm text-gray-500 mb-3">
-              Download a backup of all your wardrobe data including items, outfits, wear logs, and images.
+              Download a backup of all your wardrobe data including items, outfits, wear logs,
+              events, notes, storage spaces, AI conversations, and images.
             </p>
             <Button onClick={handleExport} disabled={isExporting}>
               {isExporting ? 'Exporting...' : 'Download Backup'}
@@ -65,7 +74,7 @@ export default function SettingsPage() {
           <div className="border-t border-gray-200 pt-4">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Import Data</h3>
             <p className="text-sm text-gray-500 mb-3">
-              Restore from a backup file. This will replace all existing data.
+              Restore from a backup file. This will replace all existing local data.
             </p>
             <input
               ref={fileInputRef}
@@ -76,7 +85,7 @@ export default function SettingsPage() {
             />
             <Button
               variant="outline"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleImportClick}
               disabled={isImporting}
             >
               {isImporting ? 'Importing...' : 'Import Backup'}

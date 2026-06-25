@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWardrobe } from '../../hooks/useWardrobe';
+import { useStorageSpaces } from '../../hooks/useStorageSpaces';
 import { useImageURL } from '../../hooks/useImageDB';
 import { useToast } from '../common/Toast';
 import { Button } from '../common';
@@ -14,6 +15,7 @@ interface ItemFormProps {
 
 export default function ItemForm({ onClose, editItem }: ItemFormProps) {
   const { addItem, updateItem } = useWardrobe();
+  const { storageSpaces } = useStorageSpaces();
   const { showToast } = useToast();
   const existingImageUrl = useImageURL(editItem?.imageId);
 
@@ -36,6 +38,7 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
   const [fit, setFit] = useState<Fit | ''>('');
   const [forSale, setForSale] = useState(false);
   const [saleLink, setSaleLink] = useState('');
+  const [storageSpaceId, setStorageSpaceId] = useState('');
 
   const isEditing = !!editItem;
 
@@ -54,6 +57,7 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
       setFit(editItem.fit || '');
       setForSale(editItem.forSale || false);
       setSaleLink(editItem.saleLink || '');
+      setStorageSpaceId(editItem.storageSpaceId || '');
 
       // Handle size - check if it's a preset or custom
       if (editItem.size) {
@@ -121,8 +125,10 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
     setIsSubmitting(true);
 
     try {
+      const storageSpaceValue = storageSpaceId || undefined;
+
       if (isEditing) {
-        updateItem(editItem.id, {
+        await updateItem(editItem.id, {
           name: name.trim(),
           category,
           color,
@@ -136,7 +142,8 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
           fit: fit || undefined,
           forSale: forSale || undefined,
           saleLink: forSale && saleLink.trim() ? saleLink.trim() : undefined,
-        });
+          storageSpaceId: storageSpaceValue,
+        }, image ?? undefined);
         showToast('Item updated successfully', 'success');
       } else {
         await addItem({
@@ -154,6 +161,7 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
           fit: fit || undefined,
           forSale: forSale || undefined,
           saleLink: forSale && saleLink.trim() ? saleLink.trim() : undefined,
+          storageSpaceId: storageSpaceValue,
         });
         showToast('Item added successfully', 'success');
       }
@@ -279,6 +287,21 @@ export default function ItemForm({ onClose, editItem }: ItemFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+      </div>
+
+      {/* Storage Location */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Storage Location</label>
+        <select
+          value={storageSpaceId}
+          onChange={(e) => setStorageSpaceId(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Unassigned</option>
+          {storageSpaces.map((space) => (
+            <option key={space.id} value={space.id}>{space.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Size Field */}

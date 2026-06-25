@@ -92,6 +92,7 @@ export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; 
 ];
 
 export const CURRENT_VERSION = 1;
+export const BACKUP_FORMAT_VERSION = 2;
 
 export const IMAGE_DB_NAME = 'WardrobeImageDB';
 export const IMAGE_STORE_NAME = 'images';

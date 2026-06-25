@@ -1,4 +1,4 @@
-import type { WardrobeItem, Outfit, WearLogEntry, Note, StorageSpace } from '../../types';
+import type { WardrobeItem, Outfit, WearLogEntry, Note, StorageSpace, PlannedEvent, Conversation } from '../../types';
 import { STORAGE_KEYS, CURRENT_VERSION } from '../../utils/constants';
 
 function getItem<T>(key: string, defaultValue: T): T {
@@ -159,6 +159,64 @@ export function deleteStorageSpace(id: string): void {
   setStorageSpaces(spaces);
 }
 
+// Events
+export function getEvents(): PlannedEvent[] {
+  return getItem<PlannedEvent[]>(STORAGE_KEYS.EVENTS, []);
+}
+
+export function setEvents(events: PlannedEvent[]): void {
+  setItem(STORAGE_KEYS.EVENTS, events);
+}
+
+export function addEvent(event: PlannedEvent): void {
+  const events = getEvents();
+  events.push(event);
+  setEvents(events);
+}
+
+export function updateEvent(id: string, updates: Partial<PlannedEvent>): void {
+  const events = getEvents();
+  const index = events.findIndex(event => event.id === id);
+  if (index !== -1) {
+    events[index] = { ...events[index], ...updates, updatedAt: new Date().toISOString() };
+    setEvents(events);
+  }
+}
+
+export function deleteEvent(id: string): void {
+  const events = getEvents().filter(event => event.id !== id);
+  setEvents(events);
+}
+
+// Conversations
+export function getConversations(): Conversation[] {
+  return getItem<Conversation[]>(STORAGE_KEYS.CHAT_CONVERSATIONS, []);
+}
+
+export function setConversations(conversations: Conversation[]): void {
+  setItem(STORAGE_KEYS.CHAT_CONVERSATIONS, conversations);
+}
+
+export function addConversation(conversation: Conversation): void {
+  const conversations = getConversations();
+  conversations.unshift(conversation);
+  setConversations(conversations);
+}
+
+export function updateConversation(id: string, updates: Partial<Conversation>): void {
+  const conversations = getConversations();
+  const index = conversations.findIndex(conv => conv.id === id);
+  if (index !== -1) {
+    conversations[index] = { ...conversations[index], ...updates, updatedAt: new Date().toISOString() };
+    setConversations(conversations);
+  }
+}
+
+export function deleteConversation(id: string): void {
+  const conversations = getConversations().filter(conv => conv.id !== id);
+  setConversations(conversations);
+}
+
 // Version and migration
 export function getVersion(): number {
   return getItem<number>(STORAGE_KEYS.VERSION, 0);
@@ -185,17 +243,29 @@ export function exportAllData() {
     wearLogs: getWearLogs(),
     notes: getNotes(),
     storageSpaces: getStorageSpaces(),
+    events: getEvents(),
+    conversations: getConversations(),
     exportedAt: new Date().toISOString(),
   };
 }
 
 // Import data
-export function importData(data: { items?: WardrobeItem[]; outfits?: Outfit[]; wearLogs?: WearLogEntry[]; notes?: Note[]; storageSpaces?: StorageSpace[] }): void {
+export function importData(data: {
+  items?: WardrobeItem[];
+  outfits?: Outfit[];
+  wearLogs?: WearLogEntry[];
+  notes?: Note[];
+  storageSpaces?: StorageSpace[];
+  events?: PlannedEvent[];
+  conversations?: Conversation[];
+}): void {
   if (data.items) setItems(data.items);
   if (data.outfits) setOutfits(data.outfits);
   if (data.wearLogs) setWearLogs(data.wearLogs);
   if (data.notes) setNotes(data.notes);
   if (data.storageSpaces) setStorageSpaces(data.storageSpaces);
+  if (data.events) setEvents(data.events);
+  if (data.conversations) setConversations(data.conversations);
 }
 
 // Clear all data
@@ -205,4 +275,7 @@ export function clearAllData(): void {
   localStorage.removeItem(STORAGE_KEYS.WEAR_LOGS);
   localStorage.removeItem(STORAGE_KEYS.NOTES);
   localStorage.removeItem(STORAGE_KEYS.STORAGE_SPACES);
+  localStorage.removeItem(STORAGE_KEYS.EVENTS);
+  localStorage.removeItem(STORAGE_KEYS.CHAT_CONVERSATIONS);
+  localStorage.removeItem(STORAGE_KEYS.VERSION);
 }

@@ -1,5 +1,6 @@
 import { useImageURL } from '../../hooks/useImageDB';
 import { useWearLog } from '../../hooks/useWearLog';
+import { useStorageSpaces } from '../../hooks/useStorageSpaces';
 import { Button } from '../common';
 import type { WardrobeItem } from '../../types';
 import { CATEGORIES, COLORS, SEASONS, FITS, ITEM_TAGS } from '../../utils/constants';
@@ -13,8 +14,10 @@ interface ItemDetailProps {
 export default function ItemDetail({ item, onDelete, onEdit }: ItemDetailProps) {
   const imageUrl = useImageURL(item.imageId);
   const { getWearCountForItem } = useWearLog();
+  const { getStorageSpace } = useStorageSpaces();
 
   const wearCount = getWearCountForItem(item.id);
+  const storageSpace = item.storageSpaceId ? getStorageSpace(item.storageSpaceId) : undefined;
   const categoryLabel = CATEGORIES.find((c) => c.value === item.category)?.label;
   const colorInfo = COLORS.find((c) => c.value === item.color);
   const fitLabel = item.fit ? FITS.find((f) => f.value === item.fit)?.label : null;
@@ -80,6 +83,11 @@ export default function ItemDetail({ item, onDelete, onEdit }: ItemDetailProps) 
           <div>
             <label className="text-sm text-gray-500">Times Worn</label>
             <p className="font-medium text-gray-900">{wearCount}</p>
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500">Storage Location</label>
+            <p className="font-medium text-gray-900">{storageSpace?.name ?? 'Unassigned'}</p>
           </div>
 
           {item.size && (

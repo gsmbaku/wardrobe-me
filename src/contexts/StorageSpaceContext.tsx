@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { v4 as uuid } from 'uuid';
 import type { StorageSpace, StorageSpaceType } from '../types';
 import * as storage from '../services/storage/localStorage';
+import { cleanupStorageSpaceReferences } from '../services/dataIntegrityService';
+import { notifyStorageChange } from '../services/storageSync';
 
 interface StorageSpaceContextType {
   storageSpaces: StorageSpace[];
@@ -48,8 +50,10 @@ export function StorageSpaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteStorageSpaceFn = useCallback((id: string) => {
+    cleanupStorageSpaceReferences(id);
     storage.deleteStorageSpace(id);
     setStorageSpaces((prev) => prev.filter((space) => space.id !== id));
+    notifyStorageChange(['items']);
   }, []);
 
   const getStorageSpace = useCallback((id: string) => {

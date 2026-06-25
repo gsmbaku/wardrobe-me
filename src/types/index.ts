@@ -99,6 +99,8 @@ export interface StorageData {
   wearLogs: WearLogEntry[];
   notes: Note[];
   storageSpaces: StorageSpace[];
+  events: PlannedEvent[];
+  conversations: Conversation[];
 }
 
 // Chat types

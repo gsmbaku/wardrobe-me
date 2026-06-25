@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { v4 as uuid } from 'uuid';
 import type { WearLogEntry } from '../types';
 import * as storage from '../services/storage/localStorage';
+import { subscribeStorageChange } from '../services/storageSync';
 
 interface WearLogContextType {
   wearLogs: WearLogEntry[];
@@ -22,6 +23,14 @@ export function WearLogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setWearLogs(storage.getWearLogs());
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    return subscribeStorageChange((collections) => {
+      if (collections.includes('wearLogs')) {
+        setWearLogs(storage.getWearLogs());
+      }
+    });
   }, []);
 
   const addWearLog = useCallback((data: { date: string; outfitId?: string; itemIds: string[]; notes?: string }) => {

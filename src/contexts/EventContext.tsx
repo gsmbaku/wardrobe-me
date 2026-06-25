@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuid } from 'uuid';
 import type { PlannedEvent, Occasion } from '../types';
-import { STORAGE_KEYS } from '../utils/constants';
+import * as storage from '../services/storage/localStorage';
+import { subscribeStorageChange } from '../services/storageSync';
 
 interface EventContextType {
   events: PlannedEvent[];
@@ -21,26 +22,21 @@ interface EventContextType {
 
 const EventContext = createContext<EventContextType | null>(null);
 
-function loadEvents(): PlannedEvent[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.EVENTS);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveEvents(events: PlannedEvent[]): void {
-  localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
-}
-
 export function EventProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<PlannedEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setEvents(loadEvents());
+    setEvents(storage.getEvents());
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    return subscribeStorageChange((collections) => {
+      if (collections.includes('events')) {
+        setEvents(storage.getEvents());
+      }
+    });
   }, []);
 
   const addEvent = useCallback((data: {
@@ -62,31 +58,24 @@ export function EventProvider({ children }: { children: ReactNode }) {
       updatedAt: now,
     };
 
-    setEvents((prev) => {
-      const updated = [...prev, newEvent];
-      saveEvents(updated);
-      return updated;
-    });
+    storage.addEvent(newEvent);
+    setEvents((prev) => [...prev, newEvent]);
   }, []);
 
   const updateEvent = useCallback((id: string, updates: Partial<Omit<PlannedEvent, 'id' | 'createdAt'>>) => {
-    setEvents((prev) => {
-      const updated = prev.map((event) =>
+    storage.updateEvent(id, updates);
+    setEvents((prev) =>
+      prev.map((event) =>
         event.id === id
           ? { ...event, ...updates, updatedAt: new Date().toISOString() }
           : event
-      );
-      saveEvents(updated);
-      return updated;
-    });
+      )
+    );
   }, []);
 
   const deleteEvent = useCallback((id: string) => {
-    setEvents((prev) => {
-      const updated = prev.filter((event) => event.id !== id);
-      saveEvents(updated);
-      return updated;
-    });
+    storage.deleteEvent(id);
+    setEvents((prev) => prev.filter((event) => event.id !== id));
   }, []);
 
   const getEvent = useCallback((id: string) => {

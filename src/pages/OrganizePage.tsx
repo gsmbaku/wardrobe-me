@@ -77,21 +77,16 @@ export default function OrganizePage() {
 
   const handleDeleteSpace = () => {
     if (deleteConfirmSpace) {
-      // Clear storage space from items that were assigned to it
-      const itemsInSpace = items.filter(item => item.storageSpaceId === deleteConfirmSpace.id);
-      for (const item of itemsInSpace) {
-        updateItem(item.id, { storageSpaceId: undefined });
-      }
       deleteStorageSpace(deleteConfirmSpace.id);
       showToast('Storage space deleted', 'success');
       setDeleteConfirmSpace(null);
     }
   };
 
-  const handleAssignItems = (spaceId: string) => {
+  const handleAssignItems = async (spaceId: string) => {
     if (assigningItems) {
       for (const item of assigningItems.items) {
-        updateItem(item.id, { storageSpaceId: spaceId });
+        await updateItem(item.id, { storageSpaceId: spaceId });
       }
       showToast(`${assigningItems.items.length} item(s) assigned`, 'success');
       setAssigningItems(null);

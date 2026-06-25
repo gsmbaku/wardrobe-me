@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuid } from 'uuid';
 import type { Conversation, ChatMessage, OpenAIMessage } from '../types';
-import { STORAGE_KEYS } from '../utils/constants';
+import * as storage from '../services/storage/localStorage';
+import { subscribeStorageChange } from '../services/storageSync';
 import { useWardrobeContext } from './WardrobeContext';
 import { useOutfitContext } from './OutfitContext';
 import { useWearLogContext } from './WearLogContext';
@@ -28,19 +29,6 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
-function getStoredConversations(): Conversation[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.CHAT_CONVERSATIONS);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStoredConversations(conversations: Conversation[]): void {
-  localStorage.setItem(STORAGE_KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
-}
-
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -51,8 +39,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { outfits } = useOutfitContext();
   const { wearLogs } = useWearLogContext();
 
+  const persistConversations = useCallback((updated: Conversation[]) => {
+    storage.setConversations(updated);
+    setConversations(updated);
+  }, []);
+
   useEffect(() => {
-    const stored = getStoredConversations();
+    const stored = storage.getConversations();
     setConversations(stored);
     if (stored.length > 0) {
       setActiveConversationId(stored[0].id);
@@ -60,10 +53,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (conversations.length > 0) {
-      setStoredConversations(conversations);
-    }
-  }, [conversations]);
+    return subscribeStorageChange((collections) => {
+      if (collections.includes('conversations')) {
+        const stored = storage.getConversations();
+        setConversations(stored);
+        setActiveConversationId((current) => {
+          if (current && stored.some(c => c.id === current)) return current;
+          return stored.length > 0 ? stored[0].id : null;
+        });
+      }
+    });
+  }, []);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
@@ -76,27 +76,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setConversations(prev => [newConversation, ...prev]);
+    const updated = [newConversation, ...storage.getConversations()];
+    persistConversations(updated);
     setActiveConversationId(newConversation.id);
     return newConversation.id;
-  }, []);
+  }, [persistConversations]);
 
   const deleteConversation = useCallback((id: string) => {
-    setConversations(prev => {
-      const updated = prev.filter(c => c.id !== id);
-      if (updated.length === 0) {
-        localStorage.removeItem(STORAGE_KEYS.CHAT_CONVERSATIONS);
-      }
-      return updated;
-    });
+    const updated = storage.getConversations().filter(c => c.id !== id);
+    persistConversations(updated);
     if (activeConversationId === id) {
-      setConversations(prev => {
-        const remaining = prev.filter(c => c.id !== id);
-        setActiveConversationId(remaining.length > 0 ? remaining[0].id : null);
-        return remaining;
-      });
+      setActiveConversationId(updated.length > 0 ? updated[0].id : null);
     }
-  }, [activeConversationId]);
+  }, [activeConversationId, persistConversations]);
 
   const setActiveConversation = useCallback((id: string | null) => {
     setActiveConversationId(id);
@@ -119,23 +111,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       referencedItemIds: referencedItemIds.length > 0 ? referencedItemIds : undefined
     };
 
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === activeConversationId
-          ? {
-              ...conv,
-              messages: [...conv.messages, userMessage],
-              updatedAt: new Date().toISOString(),
-              title: conv.messages.length === 0 ? content.slice(0, 30) + (content.length > 30 ? '...' : '') : conv.title
-            }
-          : conv
-      )
+    const currentConversations = storage.getConversations();
+    const conversation = currentConversations.find(c => c.id === activeConversationId);
+    if (!conversation) {
+      setIsLoading(false);
+      throw new Error('Conversation not found');
+    }
+
+    const withUserMessage = currentConversations.map(conv =>
+      conv.id === activeConversationId
+        ? {
+            ...conv,
+            messages: [...conv.messages, userMessage],
+            updatedAt: new Date().toISOString(),
+            title: conv.messages.length === 0 ? content.slice(0, 30) + (content.length > 30 ? '...' : '') : conv.title
+          }
+        : conv
     );
+    persistConversations(withUserMessage);
 
     try {
-      const conversation = conversations.find(c => c.id === activeConversationId);
-      if (!conversation) throw new Error('Conversation not found');
-
       const systemPrompt = buildSystemPrompt(items, outfits, wearLogs);
 
       const openAIMessages: OpenAIMessage[] = [];
@@ -159,24 +154,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString()
       };
 
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === activeConversationId
-            ? {
-                ...conv,
-                messages: [...conv.messages, assistantMessage],
-                updatedAt: new Date().toISOString()
-              }
-            : conv
-        )
+      const latestConversations = storage.getConversations();
+      const withAssistant = latestConversations.map(conv =>
+        conv.id === activeConversationId
+          ? {
+              ...conv,
+              messages: [...conv.messages, assistantMessage],
+              updatedAt: new Date().toISOString()
+            }
+          : conv
       );
+      persistConversations(withAssistant);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [activeConversationId, conversations, items, outfits, wearLogs]);
+  }, [activeConversationId, items, outfits, wearLogs, persistConversations]);
 
   const clearError = useCallback(() => {
     setError(null);

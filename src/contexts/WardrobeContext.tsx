@@ -4,6 +4,8 @@ import type { WardrobeItem, Category, Season, Fit } from '../types';
 import * as storage from '../services/storage/localStorage';
 import { saveImage, deleteImage } from '../services/storage/indexedDB';
 import { compressImage, generateThumbnail } from '../services/imageService';
+import { cleanupItemReferences, repairAllData } from '../services/dataIntegrityService';
+import { notifyStorageChange, subscribeStorageChange } from '../services/storageSync';
 
 interface WardrobeContextType {
   items: WardrobeItem[];
@@ -23,8 +25,13 @@ interface WardrobeContextType {
     fit?: Fit;
     forSale?: boolean;
     saleLink?: string;
+    storageSpaceId?: string;
   }) => Promise<void>;
-  updateItem: (id: string, updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>) => void;
+  updateItem: (
+    id: string,
+    updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>,
+    image?: File
+  ) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   getItem: (id: string) => WardrobeItem | undefined;
 }
@@ -37,8 +44,17 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     storage.initializeStorage();
+    repairAllData();
     setItems(storage.getItems());
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    return subscribeStorageChange((collections) => {
+      if (collections.includes('items')) {
+        setItems(storage.getItems());
+      }
+    });
   }, []);
 
   const addItem = useCallback(async (data: {
@@ -56,6 +72,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     fit?: Fit;
     forSale?: boolean;
     saleLink?: string;
+    storageSpaceId?: string;
   }) => {
     const imageId = uuid();
     const compressed = await compressImage(data.image);
@@ -79,6 +96,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
       fit: data.fit,
       forSale: data.forSale,
       saleLink: data.saleLink,
+      storageSpaceId: data.storageSpaceId,
       createdAt: now,
       updatedAt: now,
     };
@@ -87,7 +105,20 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     setItems((prev) => [...prev, newItem]);
   }, []);
 
-  const updateItem = useCallback((id: string, updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>) => {
+  const updateItem = useCallback(async (
+    id: string,
+    updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>,
+    image?: File
+  ) => {
+    if (image) {
+      const item = storage.getItems().find(i => i.id === id);
+      if (item) {
+        const compressed = await compressImage(image);
+        const thumbnail = await generateThumbnail(compressed);
+        await saveImage(item.imageId, compressed, thumbnail);
+      }
+    }
+
     storage.updateItem(id, updates);
     setItems((prev) =>
       prev.map((item) =>
@@ -99,9 +130,11 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
   const deleteItemFn = useCallback(async (id: string) => {
     const item = items.find((i) => i.id === id);
     if (item) {
+      cleanupItemReferences(id);
       await deleteImage(item.imageId);
       storage.deleteItem(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
+      notifyStorageChange(['outfits', 'wearLogs', 'conversations']);
     }
   }, [items]);
 

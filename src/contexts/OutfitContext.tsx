@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { v4 as uuid } from 'uuid';
 import type { Outfit, OutfitItemPosition } from '../types';
 import * as storage from '../services/storage/localStorage';
+import { cleanupOutfitReferences } from '../services/dataIntegrityService';
+import { notifyStorageChange, subscribeStorageChange } from '../services/storageSync';
 
 interface OutfitContextType {
   outfits: Outfit[];
@@ -21,6 +23,14 @@ export function OutfitProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setOutfits(storage.getOutfits());
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    return subscribeStorageChange((collections) => {
+      if (collections.includes('outfits')) {
+        setOutfits(storage.getOutfits());
+      }
+    });
   }, []);
 
   const addOutfit = useCallback((data: { name: string; description?: string; items: OutfitItemPosition[] }) => {
@@ -48,8 +58,10 @@ export function OutfitProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteOutfit = useCallback((id: string) => {
+    cleanupOutfitReferences(id);
     storage.deleteOutfit(id);
     setOutfits((prev) => prev.filter((outfit) => outfit.id !== id));
+    notifyStorageChange(['events', 'wearLogs']);
   }, []);
 
   const getOutfit = useCallback((id: string) => {

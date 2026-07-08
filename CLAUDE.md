@@ -5,12 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (localhost only)
-npm run dev:mobile   # Start dev server exposed to network (for phone testing)
-npm run build        # Type-check and build for production
-npm run lint         # Run ESLint
-npm run preview      # Preview production build
+npm run dev          # localhost only
+npm run dev:mobile   # dev server exposed to network (for phone testing)
+npm run tunnel       # expose dev server via Cloudflare (run alongside dev:mobile)
+npm run build        # type-check and build for production
+npm run lint         # run ESLint
+npm run preview      # preview production build
 ```
+
+### Phone testing from cloud dev environment
+
+`localhost` and `172.30.x.x` URLs are not reachable from your phone. Use a tunnel:
+
+1. Terminal 1: `npm run dev:mobile` (must stay on port 5173)
+2. Terminal 2: `npm run tunnel` — open the `trycloudflare.com` URL on your phone
+
+If port 5173 is in use, stop the other Vite process first (`strictPort` prevents silent port changes).
 
 ## Architecture
 

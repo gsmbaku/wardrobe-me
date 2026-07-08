@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
+    strictPort: true,
     allowedHosts: ['.loca.lt', '.trycloudflare.com'],
   },
 })

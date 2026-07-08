@@ -184,3 +184,9 @@ export interface DressMeResponse {
   suggestions: DressMeSuggestion[];
   generatedAt: string;
 }
+
+export interface AIConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}

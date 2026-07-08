@@ -82,6 +82,7 @@ export const STORAGE_KEYS = {
   EVENTS: 'wardrobe_events',
   LOCATION: 'wardrobe_location',
   WEATHER_CACHE: 'wardrobe_weather_cache',
+  AI_CONFIG: 'wardrobe_ai_config',
 } as const;
 
 export const OCCASION_TAG_HINTS: Record<Occasion, string[]> = {
@@ -106,6 +107,12 @@ export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; 
 
 export const CURRENT_VERSION = 1;
 export const BACKUP_FORMAT_VERSION = 2;
+
+export const DEFAULT_AI_CONFIG = {
+  baseUrl: '/api/groq/openai/v1',
+  apiKey: '',
+  model: 'llama-3.3-70b-versatile',
+} as const;
 
 export const IMAGE_DB_NAME = 'WardrobeImageDB';
 export const IMAGE_STORE_NAME = 'images';

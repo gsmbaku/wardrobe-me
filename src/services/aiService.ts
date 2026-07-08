@@ -1,13 +1,54 @@
-import type { WardrobeItem, Outfit, WearLogEntry, OpenAIMessage, OpenAIChatRequest, OpenAIChatResponse, OpenAIMessageContent } from '../types';
-import { DEFAULT_SYSTEM_PROMPT } from '../utils/constants';
+import type {
+  WardrobeItem,
+  Outfit,
+  WearLogEntry,
+  OpenAIMessage,
+  OpenAIChatRequest,
+  OpenAIChatResponse,
+  OpenAIMessageContent,
+  AIConfig,
+} from '../types';
+import { DEFAULT_AI_CONFIG, DEFAULT_SYSTEM_PROMPT, STORAGE_KEYS } from '../utils/constants';
 import { getImage } from './storage/indexedDB';
 
-const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL || 'https://api.moonshot.cn/v1';
-const AI_API_KEY = import.meta.env.VITE_AI_API_KEY || '';
-const AI_MODEL = import.meta.env.VITE_AI_MODEL || 'moonshot-v1-8k-vision-preview';
+const ENV_AI_CONFIG: AIConfig = {
+  baseUrl: import.meta.env.VITE_AI_BASE_URL || DEFAULT_AI_CONFIG.baseUrl,
+  apiKey: import.meta.env.VITE_AI_API_KEY || DEFAULT_AI_CONFIG.apiKey,
+  model: import.meta.env.VITE_AI_MODEL || DEFAULT_AI_CONFIG.model,
+};
+
+export function getAIConfig(): AIConfig {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.AI_CONFIG);
+    if (!stored) return ENV_AI_CONFIG;
+
+    const parsed = JSON.parse(stored) as Partial<AIConfig>;
+    return {
+      baseUrl: parsed.baseUrl?.trim() || ENV_AI_CONFIG.baseUrl,
+      apiKey: parsed.apiKey?.trim() || ENV_AI_CONFIG.apiKey,
+      model: parsed.model?.trim() || ENV_AI_CONFIG.model,
+    };
+  } catch {
+    return ENV_AI_CONFIG;
+  }
+}
+
+export function saveAIConfig(config: AIConfig): void {
+  localStorage.setItem(STORAGE_KEYS.AI_CONFIG, JSON.stringify({
+    baseUrl: config.baseUrl.trim(),
+    apiKey: config.apiKey.trim(),
+    model: config.model.trim(),
+  }));
+  window.dispatchEvent(new Event('wardrobe-ai-config-change'));
+}
+
+export function clearAIConfig(): void {
+  localStorage.removeItem(STORAGE_KEYS.AI_CONFIG);
+  window.dispatchEvent(new Event('wardrobe-ai-config-change'));
+}
 
 export function isAIConfigured(): boolean {
-  return Boolean(AI_API_KEY);
+  return Boolean(getAIConfig().apiKey);
 }
 
 export function buildSystemPrompt(
@@ -114,12 +155,14 @@ export async function sendChatMessage(
   systemPrompt: string,
   options?: { temperature?: number }
 ): Promise<string> {
-  if (!isAIConfigured()) {
+  const config = getAIConfig();
+
+  if (!config.apiKey) {
     throw new Error('AI API key not configured');
   }
 
   const requestBody: OpenAIChatRequest = {
-    model: AI_MODEL,
+    model: config.model,
     messages: [
       { role: 'system', content: systemPrompt },
       ...messages
@@ -128,11 +171,11 @@ export async function sendChatMessage(
     max_tokens: 2048
   };
 
-  const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AI_API_KEY}`
+      'Authorization': `Bearer ${config.apiKey}`
     },
     body: JSON.stringify(requestBody)
   });

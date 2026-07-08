@@ -151,13 +151,14 @@ export default function DressMePage() {
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">API Key Required</h2>
         <p className="text-gray-500 text-center max-w-md mb-4">
-          Dress Me needs your AI API key configured in environment variables.
+          Dress Me needs an AI provider configured before it can suggest outfits.
         </p>
-        <div className="bg-gray-100 rounded-lg p-4 text-sm font-mono text-gray-700 max-w-md">
-          <p>VITE_AI_BASE_URL=https://api.moonshot.cn/v1</p>
-          <p>VITE_AI_API_KEY=your-api-key</p>
-          <p>VITE_AI_MODEL=moonshot-v1-8k-vision-preview</p>
-        </div>
+        <Link
+          to="/settings"
+          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+        >
+          Configure AI Settings
+        </Link>
       </div>
     );
   }

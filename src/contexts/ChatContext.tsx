@@ -34,6 +34,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiConfigVersion, setAiConfigVersion] = useState(0);
 
   const { items } = useWardrobeContext();
   const { outfits } = useOutfitContext();
@@ -63,6 +64,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       }
     });
+  }, []);
+
+  useEffect(() => {
+    const handleConfigChange = () => {
+      setAiConfigVersion((version) => version + 1);
+    };
+    window.addEventListener('wardrobe-ai-config-change', handleConfigChange);
+    return () => window.removeEventListener('wardrobe-ai-config-change', handleConfigChange);
   }, []);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
@@ -185,7 +194,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         activeConversation,
         isLoading,
         error,
-        isConfigured: isAIConfigured(),
+        isConfigured: aiConfigVersion >= 0 && isAIConfigured(),
         createConversation,
         deleteConversation,
         setActiveConversation,

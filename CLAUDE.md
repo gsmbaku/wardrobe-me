@@ -18,7 +18,7 @@ npm run preview      # preview production build
 `localhost` and `172.30.x.x` URLs are not reachable from your phone. Use a tunnel:
 
 1. Terminal 1: `npm run dev:mobile` (must stay on port 5173)
-2. Terminal 2: `npm run tunnel` — open the `trycloudflare.com` URL on your phone
+2. Terminal 2: `npm run tunnel` — open the `trycloudflare.com` URL on your phone (uses `npx cloudflared`, no global install needed)
 
 If port 5173 is in use, stop the other Vite process first (`strictPort` prevents silent port changes).
 

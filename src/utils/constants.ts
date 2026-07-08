@@ -80,7 +80,20 @@ export const STORAGE_KEYS = {
   VERSION: 'wardrobe_version',
   CHAT_CONVERSATIONS: 'wardrobe_chat_conversations',
   EVENTS: 'wardrobe_events',
+  LOCATION: 'wardrobe_location',
+  WEATHER_CACHE: 'wardrobe_weather_cache',
 } as const;
+
+export const OCCASION_TAG_HINTS: Record<Occasion, string[]> = {
+  casual: ['casual', 'lounge'],
+  work: ['work', 'formal'],
+  formal: ['formal'],
+  date: ['date-night', 'formal'],
+  party: ['formal', 'streetwear'],
+  travel: ['casual', 'outdoor'],
+  workout: ['athletic'],
+  other: [],
+};
 
 export const STORAGE_SPACE_TYPES: { value: import('../types').StorageSpaceType; label: string; icon: string }[] = [
   { value: 'hanging', label: 'Hanging Rod', icon: '🪝' },

@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { WardrobeProvider, OutfitProvider, WearLogProvider, NotesProvider, StorageSpaceProvider, ChatProvider, EventProvider } from './contexts';
 import { ToastProvider } from './components/common';
 import { AppShell } from './components/layout';
-import { WardrobePage, OutfitsPage, CalendarPage, StatsPage, SettingsPage, NotesPage, OrganizePage, AssistantPage, EventsPage, ItemPage } from './pages';
+import { WardrobePage, OutfitsPage, CalendarPage, StatsPage, SettingsPage, NotesPage, OrganizePage, AssistantPage, EventsPage, ItemPage, DressMePage } from './pages';
 
 function App() {
   return (
@@ -17,6 +17,7 @@ function App() {
                     <EventProvider>
                       <Routes>
                         <Route element={<AppShell />}>
+                          <Route path="/dress-me" element={<DressMePage />} />
                           <Route path="/" element={<WardrobePage />} />
                           <Route path="/items/:id" element={<ItemPage />} />
                           <Route path="/outfits" element={<OutfitsPage />} />

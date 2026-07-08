@@ -111,7 +111,8 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 export async function sendChatMessage(
   messages: OpenAIMessage[],
-  systemPrompt: string
+  systemPrompt: string,
+  options?: { temperature?: number }
 ): Promise<string> {
   if (!isAIConfigured()) {
     throw new Error('AI API key not configured');
@@ -123,7 +124,7 @@ export async function sendChatMessage(
       { role: 'system', content: systemPrompt },
       ...messages
     ],
-    temperature: 0.7,
+    temperature: options?.temperature ?? 0.7,
     max_tokens: 2048
   };
 

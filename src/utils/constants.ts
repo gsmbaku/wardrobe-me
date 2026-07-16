@@ -34,6 +34,36 @@ export const FITS: { value: Fit; label: string }[] = [
   { value: 'tight', label: 'Tight' },
 ];
 
+export const WEAR_FILTER_OPTIONS = [
+  { value: 'all', label: 'Any wears' },
+  { value: 'never', label: 'Never worn' },
+  { value: 'worn', label: 'Worn at least once' },
+  { value: '5plus', label: 'Worn 5+ times' },
+] as const;
+
+export const FOR_SALE_FILTER_OPTIONS = [
+  { value: 'all', label: 'Any status' },
+  { value: 'yes', label: 'For sale' },
+  { value: 'no', label: 'Not for sale' },
+] as const;
+
+export const CPW_FILTER_OPTIONS = [
+  { value: 'all', label: 'Any cost/wear' },
+  { value: 'hasPrice', label: 'Has price' },
+  { value: 'deadMoney', label: 'Priced, never worn' },
+] as const;
+
+export const SORT_OPTIONS = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'mostWorn', label: 'Most worn' },
+  { value: 'leastWorn', label: 'Least worn' },
+  { value: 'priceHigh', label: 'Price: high to low' },
+  { value: 'priceLow', label: 'Price: low to high' },
+  { value: 'cpwLow', label: 'Best cost/wear' },
+  { value: 'cpwHigh', label: 'Worst cost/wear' },
+] as const;
+
 export const OCCASIONS: { value: Occasion; label: string }[] = [
   { value: 'casual', label: 'Casual' },
   { value: 'work', label: 'Work' },

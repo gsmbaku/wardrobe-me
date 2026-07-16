@@ -1,40 +1,89 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useWardrobe } from '../hooks/useWardrobe';
-import type { Category, Season } from '../types';
+import { useWearLog } from '../hooks/useWearLog';
+import { useStorageSpaces } from '../hooks/useStorageSpaces';
+import type { Category, Fit, Season } from '../types';
 import { Button, FilterBar, EmptyState, Modal } from '../components/common';
 import ItemGrid from '../components/wardrobe/ItemGrid';
 import ItemForm from '../components/wardrobe/ItemForm';
+import {
+  buildWearCountMap,
+  collectAvailableTags,
+  filterAndSortItems,
+  type CpwFilter,
+  type ForSaleFilter,
+  type SortOption,
+  type WearFilter,
+} from '../utils/wardrobeFilters';
+
+const SORT_VALUES: SortOption[] = [
+  'newest',
+  'oldest',
+  'mostWorn',
+  'leastWorn',
+  'priceHigh',
+  'priceLow',
+  'cpwLow',
+  'cpwHigh',
+];
+
+const WEAR_VALUES: WearFilter[] = ['all', 'never', 'worn', '5plus'];
+const FOR_SALE_VALUES: ForSaleFilter[] = ['all', 'yes', 'no'];
+const CPW_VALUES: CpwFilter[] = ['all', 'hasPrice', 'deadMoney'];
+
+function parseEnumParam<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
+  if (value && (allowed as readonly string[]).includes(value)) {
+    return value as T;
+  }
+  return fallback;
+}
 
 export default function WardrobePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { items } = useWardrobe();
+  const { wearLogs } = useWearLog();
+  const { storageSpaces } = useStorageSpaces();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const category = (searchParams.get('category') || 'all') as Category | 'all';
   const color = searchParams.get('color') || 'all';
   const season = (searchParams.get('season') || 'all') as Season | 'all';
   const q = searchParams.get('q') || '';
+  const tag = searchParams.get('tag') || 'all';
+  const fit = (searchParams.get('fit') || 'all') as Fit | 'all';
+  const storage = searchParams.get('storage') || 'all';
+  const forSale = parseEnumParam(searchParams.get('forSale'), FOR_SALE_VALUES, 'all');
+  const wear = parseEnumParam(searchParams.get('wear'), WEAR_VALUES, 'all');
+  const cpw = parseEnumParam(searchParams.get('cpw'), CPW_VALUES, 'all');
+  const sort = parseEnumParam(searchParams.get('sort'), SORT_VALUES, 'newest');
 
-  const filteredItems = items.filter((item) => {
-    if (category !== 'all' && item.category !== category) return false;
-    if (color !== 'all' && item.color !== color) return false;
-    if (season !== 'all' && !item.seasons.includes(season)) return false;
-    if (q) {
-      const query = q.toLowerCase();
-      const match =
-        item.name.toLowerCase().includes(query) ||
-        (item.brand?.toLowerCase().includes(query) ?? false) ||
-        (item.tags?.some((t) => t.toLowerCase().includes(query)) ?? false) ||
-        (item.notes?.toLowerCase().includes(query) ?? false);
-      if (!match) return false;
-    }
-    return true;
-  });
+  const wearCounts = useMemo(() => buildWearCountMap(items, wearLogs), [items, wearLogs]);
+  const availableTags = useMemo(() => collectAvailableTags(items), [items]);
+
+  const filteredItems = useMemo(
+    () =>
+      filterAndSortItems(items, wearCounts, {
+        category,
+        color,
+        season,
+        q,
+        tag,
+        fit,
+        storage,
+        forSale,
+        wear,
+        cpw,
+        sort,
+      }),
+    [items, wearCounts, category, color, season, q, tag, fit, storage, forSale, wear, cpw, sort],
+  );
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
-    if (value === 'all') {
+    const isDefault =
+      value === 'all' || (key === 'sort' && value === 'newest');
+    if (isDefault) {
       params.delete(key);
     } else {
       params.set(key, value);
@@ -49,6 +98,12 @@ export default function WardrobePage() {
     } else {
       params.set('q', value);
     }
+    setSearchParams(params);
+  };
+
+  const clearFilters = () => {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
     setSearchParams(params);
   };
 
@@ -86,9 +141,26 @@ export default function WardrobePage() {
         selectedCategory={category}
         selectedColor={color}
         selectedSeason={season}
+        selectedTag={tag}
+        selectedFit={fit}
+        selectedStorage={storage}
+        selectedForSale={forSale}
+        selectedWear={wear}
+        selectedCpw={cpw}
+        selectedSort={sort}
+        storageSpaces={storageSpaces}
+        availableTags={availableTags}
         onCategoryChange={(v) => updateFilter('category', v)}
         onColorChange={(v) => updateFilter('color', v)}
         onSeasonChange={(v) => updateFilter('season', v)}
+        onTagChange={(v) => updateFilter('tag', v)}
+        onFitChange={(v) => updateFilter('fit', v)}
+        onStorageChange={(v) => updateFilter('storage', v)}
+        onForSaleChange={(v) => updateFilter('forSale', v)}
+        onWearChange={(v) => updateFilter('wear', v)}
+        onCpwChange={(v) => updateFilter('cpw', v)}
+        onSortChange={(v) => updateFilter('sort', v)}
+        onClear={clearFilters}
       />
 
       {items.length === 0 ? (
@@ -108,7 +180,12 @@ export default function WardrobePage() {
           description="Try different keywords or adjust your filters."
         />
       ) : (
-        <ItemGrid items={filteredItems} />
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">
+            {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
+          </p>
+          <ItemGrid items={filteredItems} />
+        </div>
       )}
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Item" size="lg">

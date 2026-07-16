@@ -1,3 +1,4 @@
+export { default as DressMePage } from './DressMePage';
 export { default as WardrobePage } from './WardrobePage';
 export { default as OutfitsPage } from './OutfitsPage';
 export { default as CalendarPage } from './CalendarPage';

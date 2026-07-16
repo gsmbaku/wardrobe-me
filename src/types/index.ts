@@ -154,3 +154,39 @@ export interface OpenAIChatResponse {
     total_tokens: number;
   };
 }
+
+export interface WeatherInfo {
+  temperature: number;
+  apparentTemperature: number;
+  condition: string;
+  weatherCode: number;
+  isRaining: boolean;
+  fetchedAt: string;
+  locationLabel?: string;
+  isManual?: boolean;
+}
+
+export interface DressMeRequest {
+  occasion: Occasion;
+  weather: WeatherInfo;
+  date: string;
+}
+
+export interface DressMeSuggestion {
+  id: string;
+  name: string;
+  itemIds: string[];
+  rationale: string;
+  highlights?: string[];
+}
+
+export interface DressMeResponse {
+  suggestions: DressMeSuggestion[];
+  generatedAt: string;
+}
+
+export interface AIConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}

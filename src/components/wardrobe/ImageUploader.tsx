@@ -11,7 +11,9 @@ export default function ImageUploader({ onImageSelect, previewUrl }: ImageUpload
   const [preview, setPreview] = useState<string | null>(previewUrl || null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Separate inputs so we can explicitly offer "Choose from Photos" vs "Take Photo" on iOS
+  const fileInputRef = useRef<HTMLInputElement>(null); // Photo library / file picker (no capture)
+  const cameraInputRef = useRef<HTMLInputElement>(null); // Direct camera capture
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -54,12 +56,21 @@ export default function ImageUploader({ onImageSelect, previewUrl }: ImageUpload
   };
 
   const handleClick = () => {
+    // Default action: open photo library / file picker
     fileInputRef.current?.click();
   };
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowCropper(true);
+  };
+
+  const openPhotosPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const openCamera = () => {
+    cameraInputRef.current?.click();
   };
 
   return (
@@ -77,6 +88,14 @@ export default function ImageUploader({ onImageSelect, previewUrl }: ImageUpload
       >
         <input
           ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        {/* Separate hidden input to explicitly open camera when user taps "Take Photo" */}
+        <input
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
@@ -130,6 +149,24 @@ export default function ImageUploader({ onImageSelect, previewUrl }: ImageUpload
             <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
           </div>
         )}
+      </div>
+
+      {/* Explicit actions for iOS-friendly UX */}
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={openPhotosPicker}
+          className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Choose from Photos
+        </button>
+        <button
+          type="button"
+          onClick={openCamera}
+          className="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+        >
+          Take Photo
+        </button>
       </div>
 
       {originalImageUrl && (

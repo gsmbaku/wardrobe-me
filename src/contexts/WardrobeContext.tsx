@@ -6,10 +6,13 @@ import { saveImage, deleteImage } from '../services/storage/indexedDB';
 import { compressImage, generateThumbnail } from '../services/imageService';
 import { cleanupItemReferences, repairAllData } from '../services/dataIntegrityService';
 import { notifyStorageChange, subscribeStorageChange } from '../services/storageSync';
+import { useAuth } from './AuthContext';
+import { addRemoteItem, deleteRemoteItem, listRemoteItems, updateRemoteItem } from '../services/wardrobeSupabase';
 
 interface WardrobeContextType {
   items: WardrobeItem[];
   loading: boolean;
+  error?: string | null;
   addItem: (data: {
     name: string;
     category: Category;
@@ -34,6 +37,7 @@ interface WardrobeContextType {
   ) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   getItem: (id: string) => WardrobeItem | undefined;
+  refresh: () => Promise<void>;
 }
 
 const WardrobeContext = createContext<WardrobeContextType | null>(null);
@@ -41,21 +45,52 @@ const WardrobeContext = createContext<WardrobeContextType | null>(null);
 export function WardrobeProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user, ready } = useAuth();
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (user) {
+        const remote = await listRemoteItems();
+        setItems(remote);
+      } else {
+        storage.initializeStorage();
+        repairAllData();
+        setItems(storage.getItems());
+      }
+    } catch (e) {
+      setError('Failed to load wardrobe items. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
-    storage.initializeStorage();
-    repairAllData();
-    setItems(storage.getItems());
-    setLoading(false);
-  }, []);
+    if (!ready) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await refresh();
+      } finally {
+        if (!cancelled) {
+          // no-op; refresh already toggles loading
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, ready, refresh]);
 
   useEffect(() => {
     return subscribeStorageChange((collections) => {
       if (collections.includes('items')) {
-        setItems(storage.getItems());
+        if (!user) {
+          setItems(storage.getItems());
+        }
       }
     });
-  }, []);
+  }, [user?.id]);
 
   const addItem = useCallback(async (data: {
     name: string;
@@ -74,6 +109,12 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     saleLink?: string;
     storageSpaceId?: string;
   }) => {
+    if (user) {
+      const created = await addRemoteItem(user.id, data);
+      setItems((prev) => [...prev, created]);
+      return;
+    }
+    // Local fallback
     const imageId = uuid();
     const compressed = await compressImage(data.image);
     const thumbnail = await generateThumbnail(compressed);
@@ -100,16 +141,31 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now,
     };
-
     storage.addItem(newItem);
     setItems((prev) => [...prev, newItem]);
-  }, []);
+  }, [user?.id]);
 
   const updateItem = useCallback(async (
     id: string,
     updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>,
     image?: File
   ) => {
+    if (user) {
+      const { newImageId } = await updateRemoteItem(user.id, id, updates, image);
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...updates,
+                imageId: newImageId ?? item.imageId,
+                updatedAt: new Date().toISOString(),
+              }
+            : item
+        )
+      );
+      return;
+    }
     if (image) {
       const item = storage.getItems().find(i => i.id === id);
       if (item) {
@@ -118,32 +174,36 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         await saveImage(item.imageId, compressed, thumbnail);
       }
     }
-
     storage.updateItem(id, updates);
     setItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
       )
     );
-  }, []);
+  }, [user?.id]);
 
   const deleteItemFn = useCallback(async (id: string) => {
     const item = items.find((i) => i.id === id);
-    if (item) {
-      cleanupItemReferences(id);
-      await deleteImage(item.imageId);
-      storage.deleteItem(id);
+    if (!item) return;
+    cleanupItemReferences(id);
+    if (user) {
+      await deleteRemoteItem(user.id, id);
       setItems((prev) => prev.filter((i) => i.id !== id));
       notifyStorageChange(['outfits', 'wearLogs', 'conversations']);
+      return;
     }
-  }, [items]);
+    await deleteImage(item.imageId);
+    storage.deleteItem(id);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    notifyStorageChange(['outfits', 'wearLogs', 'conversations']);
+  }, [items, user?.id]);
 
   const getItem = useCallback((id: string) => {
     return items.find((item) => item.id === id);
   }, [items]);
 
   return (
-    <WardrobeContext.Provider value={{ items, loading, addItem, updateItem, deleteItem: deleteItemFn, getItem }}>
+    <WardrobeContext.Provider value={{ items, loading, error, addItem, updateItem, deleteItem: deleteItemFn, getItem, refresh }}>
       {children}
     </WardrobeContext.Provider>
   );

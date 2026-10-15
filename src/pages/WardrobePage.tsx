@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useWardrobe } from '../hooks/useWardrobe';
 import type { Category, Season } from '../types';
 import { Button, FilterBar, EmptyState, Modal } from '../components/common';
+import SupabaseImportBanner from '../components/wardrobe/SupabaseImportBanner';
 import ItemGrid from '../components/wardrobe/ItemGrid';
 import ItemForm from '../components/wardrobe/ItemForm';
 
@@ -54,6 +55,7 @@ export default function WardrobePage() {
 
   return (
     <div className="space-y-6">
+      <SupabaseImportBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">My Wardrobe</h1>
         <Button onClick={() => setIsAddModalOpen(true)}>

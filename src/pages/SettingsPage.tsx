@@ -4,6 +4,7 @@ import { clearAIConfig, getAIConfig, saveAIConfig } from '../services/aiService'
 import { useToast } from '../components/common/Toast';
 import { Button, Card } from '../components/common';
 import { DEFAULT_AI_CONFIG } from '../utils/constants';
+import AuthPanel from '../components/auth/AuthPanel';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
@@ -89,6 +90,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+      <AuthPanel />
 
       <Card padding="lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">AI Settings</h2>
@@ -198,8 +201,8 @@ export default function SettingsPage() {
       <Card padding="lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">About</h2>
         <p className="text-sm text-gray-600">
-          My Wardrobe is a local-first app for managing your clothing. All your data is stored
-          locally on your device and never sent to any server.
+          My Wardrobe is a local-first app for managing your clothing. You can optionally enable
+          cloud sync with Supabase to persist across devices.
         </p>
       </Card>
     </div>

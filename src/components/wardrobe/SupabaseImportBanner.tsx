@@ -4,15 +4,18 @@ import { useToast } from '../common/Toast';
 import { Button, Card } from '../common';
 import * as ls from '../../services/storage/localStorage';
 import { getAllImages } from '../../services/storage/indexedDB';
-import { addRemoteItem } from '../../services/wardrobeSupabase';
+import { addRemoteItem, getExistingBySourceKeys } from '../../services/wardrobeSupabase';
+import { useWardrobe } from '../../hooks/useWardrobe';
 
 export default function SupabaseImportBanner() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [visible, setVisible] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const { refresh } = useWardrobe();
 
   const flagKey = useMemo(() => (user ? `import-v1-done:${user.id}` : null), [user?.id]);
+  const progressKey = useMemo(() => (user ? `import-v1-progress:${user.id}` : null), [user?.id]);
 
   useEffect(() => {
     if (!user || !flagKey) return;
@@ -33,9 +36,23 @@ export default function SupabaseImportBanner() {
       const localItems = ls.getItems();
       const images = await getAllImages();
       const imageById = new Map(images.map((img) => [img.id, img]));
+      const localIds = localItems.map(i => i.id);
+      // Load per-item progress map
+      const progressMap: Record<string, true> = progressKey ? JSON.parse(localStorage.getItem(progressKey) || '{}') : {};
+      // Check remotely which ones already exist by source_key
+      const existing = await getExistingBySourceKeys(user.id, localIds);
 
       let success = 0;
       for (const item of localItems) {
+        if (existing.has(item.id)) {
+          // Already imported on this or another device
+          progressMap[item.id] = true;
+          continue;
+        }
+        if (progressMap[item.id]) {
+          // Already imported in a previous attempt on this device
+          continue;
+        }
         const img = imageById.get(item.imageId);
         if (!img) continue;
         // Reconstruct File from Blob for API compatibility
@@ -56,15 +73,21 @@ export default function SupabaseImportBanner() {
           forSale: item.forSale,
           saleLink: item.saleLink,
           storageSpaceId: item.storageSpaceId,
+          sourceKey: item.id,
         });
         success++;
+        // Mark progress
+        progressMap[item.id] = true;
+        if (progressKey) {
+          localStorage.setItem(progressKey, JSON.stringify(progressMap));
+        }
       }
       if (flagKey) {
         localStorage.setItem(flagKey, '1');
       }
       showToast(`Imported ${success} item${success === 1 ? '' : 's'} to your account`, 'success');
-      // Hard refresh wardrobe items via custom event
-      window.dispatchEvent(new CustomEvent('wardrobe-storage-change', { detail: { collections: ['items'] } }));
+      // Refresh remote list now that we're signed in
+      await refresh();
       setVisible(false);
     } catch (e) {
       showToast('Import failed. Please try again.', 'error');

@@ -19,7 +19,7 @@ export async function listRemoteItems(): Promise<WardrobeItem[]> {
     .select('*')
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []).map(row => ({
+  return (data ?? []).map((row: any) => ({
     id: row.id,
     name: row.name,
     category: row.category as Category,
@@ -57,6 +57,7 @@ export async function addRemoteItem(uid: string, data: {
   forSale?: boolean;
   saleLink?: string;
   storageSpaceId?: string;
+  sourceKey?: string;
 }): Promise<WardrobeItem> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase not configured');
@@ -79,97 +80,132 @@ export async function addRemoteItem(uid: string, data: {
 
   // Insert row
   const now = new Date().toISOString();
-  const { data: inserted, error } = await supabase
-    .from('items')
-    .insert({
-      name: data.name,
-      category: data.category,
-      color: data.color,
-      seasons: data.seasons,
-      image_id: imageId,
-      brand: data.brand ?? null,
-      purchase_date: data.purchaseDate ?? null,
-      price: data.price ?? null,
-      notes: data.notes ?? null,
-      storage_space_id: data.storageSpaceId ?? null,
-      size: data.size ?? null,
-      tags: data.tags ?? null,
-      fit: data.fit ?? null,
-      for_sale: data.forSale ?? null,
-      sale_link: data.saleLink ?? null,
-      created_at: now,
-      updated_at: now,
-    })
-    .select('*')
-    .single();
-  if (error) throw error;
+  try {
+    const { data: inserted, error } = await supabase
+      .from('items')
+      .insert({
+        user_id: uid,
+        name: data.name,
+        category: data.category,
+        color: data.color,
+        seasons: data.seasons,
+        image_id: imageId,
+        brand: data.brand ?? null,
+        purchase_date: data.purchaseDate ?? null,
+        price: data.price ?? null,
+        notes: data.notes ?? null,
+        storage_space_id: data.storageSpaceId ?? null,
+        size: data.size ?? null,
+        tags: data.tags ?? null,
+        fit: data.fit ?? null,
+        for_sale: data.forSale ?? null,
+        sale_link: data.saleLink ?? null,
+        source_key: data.sourceKey ?? null,
+        created_at: now,
+        updated_at: now,
+      })
+      .select('*')
+      .single();
+    if (error) throw error;
 
-  return {
-    id: inserted.id,
-    name: inserted.name,
-    category: inserted.category as Category,
-    color: inserted.color,
-    seasons: inserted.seasons as Season[],
-    imageId: inserted.image_id,
-    brand: inserted.brand ?? undefined,
-    purchaseDate: inserted.purchase_date ?? undefined,
-    price: inserted.price ?? undefined,
-    notes: inserted.notes ?? undefined,
-    storageSpaceId: inserted.storage_space_id ?? undefined,
-    size: inserted.size ?? undefined,
-    tags: (inserted.tags as string[] | null) ?? undefined,
-    fit: inserted.fit as Fit | null ?? undefined,
-    forSale: inserted.for_sale ?? undefined,
-    saleLink: inserted.sale_link ?? undefined,
-    createdAt: inserted.created_at,
-    updatedAt: inserted.updated_at,
-  };
+    return {
+      id: inserted.id,
+      name: inserted.name,
+      category: inserted.category as Category,
+      color: inserted.color,
+      seasons: inserted.seasons as Season[],
+      imageId: inserted.image_id,
+      brand: inserted.brand ?? undefined,
+      purchaseDate: inserted.purchase_date ?? undefined,
+      price: inserted.price ?? undefined,
+      notes: inserted.notes ?? undefined,
+      storageSpaceId: inserted.storage_space_id ?? undefined,
+      size: inserted.size ?? undefined,
+      tags: (inserted.tags as string[] | null) ?? undefined,
+      fit: inserted.fit as Fit | null ?? undefined,
+      forSale: inserted.for_sale ?? undefined,
+      saleLink: inserted.sale_link ?? undefined,
+      createdAt: inserted.created_at,
+      updatedAt: inserted.updated_at,
+    };
+  } catch (e) {
+    // Cleanup orphaned uploads on insert failure
+    await bucket.remove([originalKey, thumbKey]).catch(() => {});
+    throw e;
+  }
 }
 
-export async function updateRemoteItem(uid: string, id: string, updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>, image?: File): Promise<void> {
+export async function updateRemoteItem(
+  uid: string,
+  id: string,
+  updates: Partial<Omit<WardrobeItem, 'id' | 'imageId' | 'createdAt'>>,
+  image?: File
+): Promise<{ newImageId?: string }> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase not configured');
 
-  // If image provided, fetch current imageId first
-  let imageId: string | null = null;
+  const bucket = supabase.storage.from(BUCKET);
+  let oldImageId: string | null = null;
+  let newImageId: string | undefined;
   if (image) {
     const { data, error } = await supabase.from('items').select('image_id').eq('id', id).single();
     if (error) throw error;
-    imageId = data.image_id as string;
+    oldImageId = data.image_id as string;
+    newImageId = crypto.randomUUID();
     const compressed = await compressImage(image);
     const thumbnail = await generateThumbnail(compressed);
-    const bucket = supabase.storage.from(BUCKET);
     const [u1, u2] = await Promise.all([
-      bucket.upload(imagePath(uid, imageId), compressed, { upsert: true, contentType: 'image/jpeg', cacheControl: '31536000' }),
-      bucket.upload(thumbPath(uid, imageId), thumbnail, { upsert: true, contentType: 'image/jpeg', cacheControl: '31536000' }),
+      bucket.upload(imagePath(uid, newImageId), compressed, { upsert: true, contentType: 'image/jpeg', cacheControl: '31536000' }),
+      bucket.upload(thumbPath(uid, newImageId), thumbnail, { upsert: true, contentType: 'image/jpeg', cacheControl: '31536000' }),
     ]);
     if (u1.error) throw u1.error;
     if (u2.error) throw u2.error;
   }
 
-  const dbUpdates: Record<string, unknown> = {
-    name: updates.name,
-    category: updates.category,
-    color: updates.color,
-    seasons: updates.seasons,
-    brand: updates.brand ?? null,
-    purchase_date: updates.purchaseDate ?? null,
-    price: updates.price ?? null,
-    notes: updates.notes ?? null,
-    storage_space_id: updates.storageSpaceId ?? null,
-    size: updates.size ?? null,
-    tags: updates.tags ?? null,
-    fit: updates.fit ?? null,
-    for_sale: updates.forSale ?? null,
-    sale_link: updates.saleLink ?? null,
-    updated_at: new Date().toISOString(),
-  };
+  // Build update payload only with provided fields
+  const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const map: Array<[keyof typeof updates, string]> = [
+    ['name', 'name'],
+    ['category', 'category'],
+    ['color', 'color'],
+    ['seasons', 'seasons'],
+    ['brand', 'brand'],
+    ['purchaseDate', 'purchase_date'],
+    ['price', 'price'],
+    ['notes', 'notes'],
+    ['storageSpaceId', 'storage_space_id'],
+    ['size', 'size'],
+    ['tags', 'tags'],
+    ['fit', 'fit'],
+    ['forSale', 'for_sale'],
+    ['saleLink', 'sale_link'],
+  ];
+  for (const [srcKey, dstKey] of map) {
+    if (Object.prototype.hasOwnProperty.call(updates, srcKey)) {
+      const value = (updates as any)[srcKey];
+      if (value !== undefined) dbUpdates[dstKey] = value;
+    }
+  }
+  if (newImageId) {
+    dbUpdates['image_id'] = newImageId;
+  }
 
-  // Remove undefined keys so Supabase doesn't set them to null
-  Object.keys(dbUpdates).forEach((k) => dbUpdates[k] === undefined && delete dbUpdates[k]);
+  try {
+    const { error } = await supabase.from('items').update(dbUpdates).eq('id', id);
+    if (error) throw error;
+  } catch (e) {
+    // If DB update failed after uploading a new image, remove the new files
+    if (newImageId) {
+      await bucket.remove([imagePath(uid, newImageId), thumbPath(uid, newImageId)]).catch(() => {});
+    }
+    throw e;
+  }
 
-  const { error } = await supabase.from('items').update(dbUpdates).eq('id', id);
-  if (error) throw error;
+  // After successful DB update, if we replaced the image, delete the old files
+  if (oldImageId && newImageId) {
+    await bucket.remove([imagePath(uid, oldImageId), thumbPath(uid, oldImageId)]).catch(() => {});
+  }
+  return { newImageId };
 }
 
 export async function deleteRemoteItem(uid: string, id: string): Promise<void> {
@@ -193,5 +229,17 @@ export async function getSignedImageUrl(uid: string, imageId: string, isThumb: b
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(key, expiresInSeconds);
   if (error) return null;
   return data?.signedUrl ?? null;
+}
+
+export async function getExistingBySourceKeys(uid: string, keys: string[]): Promise<Set<string>> {
+  const supabase = getSupabase();
+  if (!supabase || keys.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from('items')
+    .select('source_key')
+    .eq('user_id', uid)
+    .in('source_key', keys);
+  if (error) throw error;
+  return new Set((data ?? []).map((r: any) => r.source_key as string));
 }
 

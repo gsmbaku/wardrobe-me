@@ -23,16 +23,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     // Load current session
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser({ id: data.user.id, email: data.user.email ?? null });
+    supabase.auth.getUser().then((res) => {
+      const u = (res as any)?.data?.user as { id: string; email?: string | null } | null;
+      if (u) {
+        setUser({ id: u.id, email: (u.email ?? null) as string | null });
       }
       setReady(true);
     });
     // Subscribe to auth changes
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email ?? null });
+      const u = (session as any)?.user as { id: string; email?: string | null } | undefined;
+      if (u) {
+        setUser({ id: u.id, email: (u.email ?? null) as string | null });
       } else {
         setUser(null);
       }

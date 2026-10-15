@@ -3,9 +3,6 @@ insert into storage.buckets (id, name, public)
 values ('item-photos', 'item-photos', false)
 on conflict (id) do nothing;
 
--- RLS on storage.objects for the bucket
-alter table storage.objects enable row level security;
-
 -- Allow users to manage objects under their own UID folder: `${uid}/...`
 drop policy if exists "item-photos read own" on storage.objects;
 create policy "item-photos read own"

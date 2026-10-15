@@ -12,6 +12,7 @@ import { addRemoteItem, deleteRemoteItem, listRemoteItems, updateRemoteItem } fr
 interface WardrobeContextType {
   items: WardrobeItem[];
   loading: boolean;
+  error?: string | null;
   addItem: (data: {
     name: string;
     category: Category;
@@ -36,6 +37,7 @@ interface WardrobeContextType {
   ) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   getItem: (id: string) => WardrobeItem | undefined;
+  refresh: () => Promise<void>;
 }
 
 const WardrobeContext = createContext<WardrobeContextType | null>(null);
@@ -43,31 +45,42 @@ const WardrobeContext = createContext<WardrobeContextType | null>(null);
 export function WardrobeProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user, ready } = useAuth();
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (user) {
+        const remote = await listRemoteItems();
+        setItems(remote);
+      } else {
+        storage.initializeStorage();
+        repairAllData();
+        setItems(storage.getItems());
+      }
+    } catch (e) {
+      setError('Failed to load wardrobe items. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
-    const load = async () => {
+    (async () => {
       try {
-        if (user) {
-          const remote = await listRemoteItems();
-          if (!cancelled) setItems(remote);
-        } else {
-          storage.initializeStorage();
-          repairAllData();
-          if (!cancelled) setItems(storage.getItems());
-        }
+        await refresh();
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          // no-op; refresh already toggles loading
+        }
       }
-    };
-    setLoading(true);
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, ready]);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, ready, refresh]);
 
   useEffect(() => {
     return subscribeStorageChange((collections) => {
@@ -138,10 +151,17 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     image?: File
   ) => {
     if (user) {
-      await updateRemoteItem(user.id, id, updates, image);
+      const { newImageId } = await updateRemoteItem(user.id, id, updates, image);
       setItems((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
+          item.id === id
+            ? {
+                ...item,
+                ...updates,
+                imageId: newImageId ?? item.imageId,
+                updatedAt: new Date().toISOString(),
+              }
+            : item
         )
       );
       return;
@@ -183,7 +203,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   return (
-    <WardrobeContext.Provider value={{ items, loading, addItem, updateItem, deleteItem: deleteItemFn, getItem }}>
+    <WardrobeContext.Provider value={{ items, loading, error, addItem, updateItem, deleteItem: deleteItemFn, getItem, refresh }}>
       {children}
     </WardrobeContext.Provider>
   );

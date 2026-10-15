@@ -186,7 +186,7 @@ export async function deleteRemoteItem(uid: string, id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function getSignedImageUrl(uid: string, imageId: string, isThumb: boolean, expiresInSeconds = 60): Promise<string | null> {
+export async function getSignedImageUrl(uid: string, imageId: string, isThumb: boolean, expiresInSeconds = 3600): Promise<string | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
   const key = isThumb ? thumbPath(uid, imageId) : imagePath(uid, imageId);
